@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandProjectPV-425", "CommandProjectPV-425\CommandProjectPV-425.csproj", "{8B78D598-00FD-4661-A829-89E7839DA776}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shamil", "Shamil", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskParallelLibrary", "TaskParallelLibrary\TaskParallelLibrary.csproj", "{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +19,16 @@ Global
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7B0E75F5-D256-4A22-B450-96D9B5AB7C1F} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B22F32AC-1504-44CE-A23A-CCCDEEF4B9B8}
