@@ -1,5 +1,8 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace TaskParallelLibrary.Tests;
 
@@ -210,5 +213,196 @@ public class MaxFrequencyOfElements
         }
 
         return globalCounts.Values.Max();
+    }
+
+    //-------------------------------------------------------------------------------------
+    //                                                                         Array_Unsafe
+    //-------------------------------------------------------------------------------------
+    [Benchmark]
+    public unsafe int Array_Unsafe()
+    {
+        var counts = new Dictionary<int, int>(_array.Length / 4);
+        int maxFreq = 0;
+
+        fixed (int* ptr = _array)
+        {
+            int* p = ptr;
+            int* end = ptr + _array.Length;
+
+            // Основной цикл (группа по 4)
+            while (p + 4 <= end)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    int val = p[i];
+                    // Использование индексатора (counts[val] = counts[val] + 1)
+                    // может быть немного быстрее, чем TryAdd + Get/Set, если ключи уже добавлены.
+                    // Однако для данной задачи TryAdd/Set - самый идиоматичный способ.
+                    if (counts.TryGetValue(val, out int currentCount))
+                    {
+                        currentCount++;
+                        counts[val] = currentCount;
+                    }
+                    else
+                    {
+                        currentCount = 1;
+                        counts.Add(val, currentCount);
+                    }
+
+                    if (currentCount > maxFreq)
+                        maxFreq = currentCount;
+                }
+                p += 4;
+            }
+
+            // Хвостовой цикл
+            while (p < end)
+            {
+                int val = *p;
+                if (counts.TryGetValue(val, out int currentCount))
+                {
+                    currentCount++;
+                    counts[val] = currentCount;
+                }
+                else
+                {
+                    currentCount = 1;
+                    counts.Add(val, currentCount);
+                }
+
+                if (currentCount > maxFreq)
+                    maxFreq = currentCount;
+
+                p++;
+            }
+        }
+
+        return maxFreq;
+    }
+
+    //-------------------------------------------------------------------------------------
+    //                                                                           Array_SIMD  
+    //-------------------------------------------------------------------------------------
+    [Benchmark]
+    public int Array_SIMD()
+    {
+        var counts = new Dictionary<int, int>(_array.Length / 4);
+        int vectorSize = Vector<int>.Count;
+        int length = _array.Length;
+        int maxFreq = 0;
+
+        // Использование Vector<T> в этой задаче (подсчет частот) только добавляет
+        // накладные расходы, поскольку сам подсчет не векторизуется.
+        // Однако, следуя структуре, оставляем обход с помощью Vector<T>
+        for (int i = 0; i <= length - vectorSize; i += vectorSize)
+        {
+            var vector = new Vector<int>(_array, i);
+            for (int j = 0; j < vectorSize; j++)
+            {
+                int val = vector[j];
+
+                if (counts.TryGetValue(val, out int currentCount))
+                {
+                    currentCount++;
+                    counts[val] = currentCount;
+                }
+                else
+                {
+                    currentCount = 1;
+                    counts.Add(val, currentCount);
+                }
+
+                if (currentCount > maxFreq)
+                    maxFreq = currentCount;
+            }
+        }
+
+        // Хвостовой цикл
+        for (int i = length - length % vectorSize; i < length; i++)
+        {
+            int val = _array[i];
+
+            if (counts.TryGetValue(val, out int currentCount))
+            {
+                currentCount++;
+                counts[val] = currentCount;
+            }
+            else
+            {
+                currentCount = 1;
+                counts.Add(val, currentCount);
+            }
+
+            if (currentCount > maxFreq)
+                maxFreq = currentCount;
+        }
+
+        return maxFreq;
+    }
+
+    //-------------------------------------------------------------------------------------
+    //                                                                Array_SIMD_Intrinsics
+    //-------------------------------------------------------------------------------------
+    [Benchmark]
+    public unsafe int Array_SIMD_Intrinsics()
+    {
+        if (!Avx2.IsSupported)
+            throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
+
+        var counts = new Dictionary<int, int>(_array.Length / 4);
+        int length = _array.Length;
+        int maxFreq = 0;
+
+        fixed (int* ptr = _array)
+        {
+            int i = 0;
+
+            // Основной цикл (группа по 8 с использованием AVX)
+            for (; i <= length - 8; i += 8)
+            {
+                var vector = Avx.LoadVector256(ptr + i);
+                for (int j = 0; j < 8; j++)
+                {
+                    // GetElement(j) извлекает элемент из SIMD-регистра
+                    int val = vector.GetElement(j);
+
+                    if (counts.TryGetValue(val, out int currentCount))
+                    {
+                        currentCount++;
+                        counts[val] = currentCount;
+                    }
+                    else
+                    {
+                        currentCount = 1;
+                        counts.Add(val, currentCount);
+                    }
+
+                    if (currentCount > maxFreq)
+                        maxFreq = currentCount;
+                }
+            }
+
+            // Хвостовой цикл
+            for (; i < length; i++)
+            {
+                int val = ptr[i];
+
+                if (counts.TryGetValue(val, out int currentCount))
+                {
+                    currentCount++;
+                    counts[val] = currentCount;
+                }
+                else
+                {
+                    currentCount = 1;
+                    counts.Add(val, currentCount);
+                }
+
+                if (currentCount > maxFreq)
+                    maxFreq = currentCount;
+            }
+        }
+
+        return maxFreq;
     }
 }
