@@ -35,37 +35,12 @@ namespace CommandProjectPV_425.Tests
         }
 
         //-------------------------------------------------------------------------------------
-        //                                                                           Array_LINQ
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Array_LINQ()
-        {
-            return _array.Count(IsDivisibleBy3And5);
-        }
-
-        //-------------------------------------------------------------------------------------
         //                                                                          Array_PLINQ
         //-------------------------------------------------------------------------------------
         [Benchmark]
         public int Array_PLINQ()
         {
             return _array.AsParallel().Count(IsDivisibleBy3And5);
-        }
-
-        //-------------------------------------------------------------------------------------
-        //                                                               Parallel_ConcurrentBag
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Parallel_ConcurrentBag()
-        {
-            var bag = new ConcurrentBag<int>();
-            Parallel.ForEach(_array, item =>
-            {
-                if (item % 3 == 0 && item % 5 == 0)
-                    bag.Add(item);
-            });
-
-            return bag.Count;
         }
 
         //-------------------------------------------------------------------------------------

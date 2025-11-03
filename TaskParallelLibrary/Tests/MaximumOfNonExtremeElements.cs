@@ -49,16 +49,6 @@ namespace CommandProjectPV_425.Tests
         }
 
         //-------------------------------------------------------------------------------------
-        //                                                                           Array_LINQ
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Array_LINQ()
-        {
-            var nonExtreme = _array.Where((x, i) => !IsLocalMinOrMax(_array, i));
-            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
-        }
-
-        //-------------------------------------------------------------------------------------
         //                                                                          Array_PLINQ
         //-------------------------------------------------------------------------------------
         [Benchmark]
@@ -66,25 +56,6 @@ namespace CommandProjectPV_425.Tests
         {
             var nonExtreme = _array.AsParallel().Where((x, i) => !IsLocalMinOrMax(_array, i));
             return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
-        }
-
-        //-------------------------------------------------------------------------------------
-        //                                                               Parallel_ConcurrentBag
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Parallel_ConcurrentBag()
-        {
-            var bag = new ConcurrentBag<int>();
-
-            Parallel.ForEach(Enumerable.Range(0, _array.Length), i =>
-            {
-                if (!IsLocalMinOrMax(_array, i))
-                {
-                    bag.Add(_array[i]);
-                }
-            });
-
-            return bag.Count > 0 ? bag.Max() : int.MinValue;
         }
 
         //-------------------------------------------------------------------------------------

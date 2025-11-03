@@ -39,16 +39,6 @@ namespace CommandProjectPV_425.Tests
         }
 
         //-------------------------------------------------------------------------------------
-        //                                                                           Array_LINQ
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Array_LINQ()
-        {
-            double avg = _array.Average();
-            return _array.Count(x => x > avg);
-        }
-
-        //-------------------------------------------------------------------------------------
         //                                                                          Array_PLINQ
         //-------------------------------------------------------------------------------------
         [Benchmark]
@@ -56,24 +46,6 @@ namespace CommandProjectPV_425.Tests
         {
             double avg = _array.AsParallel().Average();
             return _array.AsParallel().Count(x => x > avg);
-        }
-
-        //-------------------------------------------------------------------------------------
-        //                                                               Parallel_ConcurrentBag
-        //-------------------------------------------------------------------------------------
-        [Benchmark]
-        public int Parallel_ConcurrentBag()
-        {
-            double avg = _array.AsParallel().Average();
-            var bag = new ConcurrentBag<int>();
-
-            Parallel.ForEach(_array, x =>
-            {
-                if (x > avg)
-                    bag.Add(x);
-            });
-
-            return bag.Count;
         }
 
         //-------------------------------------------------------------------------------------
