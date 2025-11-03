@@ -1,6 +1,9 @@
-﻿using CommandProjectPV_425.Tests;
+﻿using CommandProjectPV_425.Models;
+using CommandProjectPV_425.Tests;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,38 +23,57 @@ namespace CommandProjectPV_425.Views
             DataContext = this;
         }
 
-        private void ResetApp()
+        private void TurnOffButtons()
         {
             RunBenchmarkBtn.IsEnabled = false;
             SaveToDbBtn.IsEnabled = false;
             ShowChartsBtn.IsEnabled = false;
+            ClearResultsBtn.IsEnabled = false;
+            ExportBtn.IsEnabled = false;
+            ToJsonBtn.IsEnabled = false;
             ProgressBar.Value = 0;
             StatusText.Text = "Подготовка к тестированию...";
             Results.Clear();
+        }
+
+        private void TurnOnButtons()
+        {
+            SaveToDbBtn.IsEnabled = true;
+            ShowChartsBtn.IsEnabled = true;
+            ClearResultsBtn.IsEnabled = true;
+            ExportBtn.IsEnabled = true;
+            RunBenchmarkBtn.IsEnabled = true;
+            ToJsonBtn.IsEnabled = true;
         }
 
         private void ClearResultsBtn_Click(object sender, RoutedEventArgs e)
         {
             Results.Clear();
             ProgressBar.Value = 0;
+            ProgressText.Text = "0%";
             StatusText.Text = "Готов к тестированию...";
             SaveToDbBtn.IsEnabled = false;
             ShowChartsBtn.IsEnabled = false;
+            ClearResultsBtn.IsEnabled = false;
+            ToJsonBtn.IsEnabled = false;
+            ExportBtn.IsEnabled = false;
+            RunBenchmarkBtn.IsEnabled = true;
         }
 
-        private (string typeTask, int size) GetTypeAndSizeTask()
+        private (string typeTask, int size, int numberOfRuns) GetTypeAndSizeTask()
         {
             try
             {
                 var taskType = ((ComboBoxItem)TaskTypeComboBox.SelectedItem).Content.ToString();
                 var sizeText = ((ComboBoxItem)SizeComboBox.SelectedItem).Content.ToString();
+                var countOfRuns = int.Parse(((ComboBoxItem)RunsComboBox.SelectedItem).Content.ToString());
                 var size = int.Parse(sizeText.Replace(",", ""));
-                return (taskType, size);
+                return (taskType, size, countOfRuns);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Не удалось получить тип задачи или размер", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return (string.Empty, default);
+                MessageBox.Show("Выберите тип задачи, размер входных данных и количество тестов", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return (string.Empty, default,default);
             }
         }
 
@@ -108,18 +130,13 @@ namespace CommandProjectPV_425.Views
                 new List<(string, Func<int>)>
                 {
                     ("Array For", countBenchmark.Array_For),
-                     
                     ("Array LINQ", countBenchmark.Array_LINQ),
-                    ("List LINQ", countBenchmark.List_LINQ),
-                    ("List Foreach", countBenchmark.List_Foreach),
-                    ("Parallel For Local", countBenchmark.Parallel_For_Local),
-                    ("Parallel ForEach Partitioner", countBenchmark.Parallel_ForEach_Partitioner),
+                    ("Array PLINQ", countBenchmark.Array_PLINQ),
                     ("Parallel ConcurrentBag", countBenchmark.Parallel_ConcurrentBag),
-                    ("PLINQ Auto", countBenchmark.PLINQ_AutoParallel),
-                    ("PLINQ With Degree", countBenchmark.PLINQ_WithDegreeOfParallelism),
-                    ("PLINQ Force Parallel", countBenchmark.PLINQ_ForceParallel),
-                    ("Tasks Run", countBenchmark.Tasks_Run),
-                    ("Tasks Factory", countBenchmark.Tasks_Factory)
+                    ("Parallel For", countBenchmark.Parallel_For),
+                    ("Parallel Partitioner", countBenchmark.Parallel_Partitioner),
+                    ("Parallel Invoke", countBenchmark.Parallel_Invoke),
+                    ("Tasks Run", countBenchmark.Tasks_Run)
                 },
 
 
@@ -127,47 +144,38 @@ namespace CommandProjectPV_425.Views
                 new List<(string, Func<int>)>
                 {
                     ("Array For", divBenchmark.Array_For),
-                    ("List For", divBenchmark.List_For),
                     ("Array LINQ", divBenchmark.Array_LINQ),
-                    ("Tasks By Cores", divBenchmark.List_LINQ),
-                    ("Parallel ForEach Partitioner", divBenchmark.Parallel_ForEach_Partitioner),
-                    ("Parallel For Local", divBenchmark.Parallel_For_Local),
-                    ("Parallel Concurrent Bag", divBenchmark.Parallel_ConcurrentBag),
-                    ("PLINQ Auto Parallel", divBenchmark.PLINQ_AutoParallel),
-                    ("PLINQ With Degree Of Parallelism", divBenchmark.PLINQ_WithDegreeOfParallelism),
-                    ("PLINQ Force Parallel", divBenchmark.PLINQ_ForceParallel),
-                    ("Tasks Run", divBenchmark.Tasks_Run),
-                    ("Tasks Factory", divBenchmark.Tasks_Factory),
+                    ("Array PLINQ", divBenchmark.Array_PLINQ),
+                    ("Parallel ConcurrentBag", divBenchmark.Parallel_ConcurrentBag),
+                    ("Parallel For", divBenchmark.Parallel_For),
+                    ("Parallel Partitioner", divBenchmark.Parallel_Partitioner),
+                    ("Parallel Invoke", divBenchmark.Parallel_Invoke),
+                    ("Tasks Run", divBenchmark.Tasks_Run)
                 },
 
                 "Find Prime Numbers" when benchmark is FindPrimeNumbers primeBenchmark =>
                 new List<(string, Func<int>)>
                 {
                     ("Array For", primeBenchmark.Array_For),
+                    ("Array LINQ", primeBenchmark.Array_LINQ),
+                    ("Array PLINQ", primeBenchmark.Array_PLINQ),
+                    ("Parallel ConcurrentBag", primeBenchmark.Parallel_ConcurrentBag),
                     ("Parallel For", primeBenchmark.Parallel_For),
-                    ("PLINQ Array", primeBenchmark.Array_PLINQ),
-                    ("Tasks By Cores", primeBenchmark.Tasks_By_Cores),
-                    ("Parallel ForEach", primeBenchmark.Parallel_ForEach),
+                    ("Parallel Partitioner", primeBenchmark.Parallel_Partitioner),
                     ("Parallel Invoke", primeBenchmark.Parallel_Invoke),
-                    ("Parallel ForEach ConcurrentBag", primeBenchmark.Parallel_ForEach_ConcurrentBag),
-                    ("Parallel For Lists", primeBenchmark.Parallel_For_Lists),
-                    ("Tasks Run", primeBenchmark.Tasks_Run),
-                    ("PLINQ With Degree", primeBenchmark.PLINQ_WithDegreeOfParallelism),
-                    ("Partitioner ForEach", primeBenchmark.Partitioner_ForEach)
+                    ("Tasks Run", primeBenchmark.Tasks_Run)
                  },
 
                 "Maximum Of Non Extreme Elements" when benchmark is MaximumOfNonExtremeElements extremeBenchmark =>
                 new List<(string, Func<int>)>
                 {
-                    ("Array For", extremeBenchmark.Array_For),
-                    ("List For", extremeBenchmark.List_For),
-                    ("Parallel For ConcurrentBag", extremeBenchmark.Parallel_For_ConcurrentBag),
-                    ("Parallel For", extremeBenchmark.Parallel_For),
-                    ("Parallel Foreach Partitioner", extremeBenchmark.Parallel_Foreach_Partitioner),
-                    ("List LINQ", extremeBenchmark.List_LINQ),
+                     ("Array For", extremeBenchmark.Array_For),
                     ("Array LINQ", extremeBenchmark.Array_LINQ),
-                    ("List PLINQ", extremeBenchmark.List_PLINQ),
                     ("Array PLINQ", extremeBenchmark.Array_PLINQ),
+                    ("Parallel ConcurrentBag", extremeBenchmark.Parallel_ConcurrentBag),
+                    ("Parallel For", extremeBenchmark.Parallel_For),
+                    ("Parallel Partitioner", extremeBenchmark.Parallel_Partitioner),
+                    ("Parallel Invoke", extremeBenchmark.Parallel_Invoke),
                     ("Tasks Run", extremeBenchmark.Tasks_Run)
                 },
                 _ => new List<(string, Func<int>)>()
@@ -178,12 +186,12 @@ namespace CommandProjectPV_425.Views
         {
             try
             {
-                ResetApp();
-                var (typeTask, size) = GetTypeAndSizeTask();
+                TurnOffButtons(); 
+                var (typeTask, size, numberOfRuns) = GetTypeAndSizeTask();
                 if (string.IsNullOrEmpty(typeTask)) return;
 
                 var benchmark = InitializeBenchmark(typeTask, size);
-                if (benchmark == null) return;
+                if (benchmark == null)  return;
 
                 var setupMethod = benchmark.GetType().GetMethod("Setup");
                 setupMethod?.Invoke(benchmark, null);
@@ -196,7 +204,6 @@ namespace CommandProjectPV_425.Views
                 }
 
                 double baselineTime = 0;
-                const int numberOfRuns = 10;
 
                 for (int i = 0; i < tests.Count; i++)
                 {
@@ -248,17 +255,17 @@ namespace CommandProjectPV_425.Views
                         RawTimes = timeMeasurements
                     });
 
-                    ProgressBar.Value = (i + 1) * 100 / tests.Count;
+                    UpdateProgress((i + 1) * 100 / tests.Count);
                 }
 
                 StatusText.Text = $"Тестирование завершено! Протестировано {tests.Count} методов для задачи '{typeTask}'.";
-                SaveToDbBtn.IsEnabled = true;
-                ShowChartsBtn.IsEnabled = true;
+                TurnOnButtons();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 StatusText.Text = "Ошибка при выполнении тестов";
+                TurnOnButtons(); 
             }
             finally
             {
@@ -288,11 +295,84 @@ namespace CommandProjectPV_425.Views
             }
         }
 
+        private void UpdateProgress(double value, string text = null)
+        {
+            ProgressBar.Value = value;
+            ProgressText.Text = $"{value:F0}%";
+            if (!string.IsNullOrEmpty(text))
+                StatusText.Text = text;
+        }
+
+
+        private void ExportBtn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void SaveToJsonClick(object sender, RoutedEventArgs e)
+        {
+            SaveResultsToJson();
+        }
+
+        private async Task SaveResultsToJson()
+        {
+            try
+            {
+                string directoryPath = "BenchmarkResults";
+                if (!Directory.Exists(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath);
+                }
+
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                string fileName = $"BenchmarkResults_{timestamp}.json";
+                string filePath = Path.Combine(directoryPath, fileName);
+
+                var resultsToSave = Results.Select(r => new
+                {
+                    r.TaskType,
+                    r.DataSize,
+                    r.MethodName,
+                    r.ExecutionTime,
+                    r.MemoryUsed,
+                    r.Result,
+                    r.Speedup,
+                    Timestamp = r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
+                    r.Error,
+                    r.StdDev,
+                    r.RawTimes
+                }).ToList();
+
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                string json = JsonSerializer.Serialize(resultsToSave, options);
+                await File.WriteAllTextAsync(filePath, json);
+
+                MessageBox.Show($"Результаты сохранены в файл: {filePath}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении результатов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+        }
+
         private async Task SaveResultsToDatabase()
         {
-            // Реализовать 
-            await Task.Delay(500);
-            MessageBox.Show("Результаты сохранены в базе данных");
+            // реализовать
+            try
+            {
+                MessageBox.Show("Результаты сохранены в базе данных");
+            }
+            catch(Exception ex)
+            {
+
+            }
+
         }
     }
 }

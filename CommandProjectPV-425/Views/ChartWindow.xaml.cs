@@ -1,9 +1,6 @@
-﻿using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
+﻿using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 
 namespace CommandProjectPV_425.Views
@@ -34,8 +31,8 @@ namespace CommandProjectPV_425.Views
             var axis = CreateMethodAxis(methodNames);
 
             // График времени выполнения
-            TimeChart.Series = new ISeries[]
-            {
+            TimeChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = timeValues,
@@ -43,13 +40,14 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Blue),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2} мс"
                 }
-            };
-            TimeChart.XAxes = new[] { axis };
-            TimeChart.YAxes = new[] { new Axis { Name = "Время выполнения методов", TextSize = 14 } };
+            ];
+            TimeChart.XAxes = [axis];
+            Axis[] axes = [new Axis { Name = "Время выполнения методов", TextSize = 12}];
+            TimeChart.YAxes = axes;
 
             // График использования памяти
-            MemoryChart.Series = new ISeries[]
-            {
+            MemoryChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = memoryValues,
@@ -57,13 +55,13 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Red),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2} MB"
                 }
-            };
-            MemoryChart.XAxes = new[] { axis };
-            MemoryChart.YAxes = new[] { new Axis { Name = "Использование памяти", TextSize = 14 } };
+            ];
+            MemoryChart.XAxes = [axis];
+            MemoryChart.YAxes = [new Axis { Name = "Использование памяти", TextSize = 12 }];
 
             // График ускорения
-            SpeedupChart.Series = new ISeries[]
-            {
+            SpeedupChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = speedupValues,
@@ -71,14 +69,18 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Green),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2}x"
                 }
-            };
-            SpeedupChart.XAxes = new[] { axis };
-            SpeedupChart.YAxes = new[] { new Axis { Name = "Ускорение относительно базового метода", TextSize = 14 } };
+            ];
+            SpeedupChart.XAxes = [axis];
+            SpeedupChart.YAxes = [new Axis 
+            {
+                 Name = "Ускорение",
+                 TextSize = 12
+            }];
 
             // График эффективности
             var efficiencyValues = CalculateEfficiencyValues(speedupValues, memoryValues);
-            EfficiencyChart.Series = new ISeries[]
-            {
+            EfficiencyChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = efficiencyValues,
@@ -86,9 +88,13 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Purple),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2}"
                 }
-            };
-            EfficiencyChart.XAxes = new[] { axis };
-            EfficiencyChart.YAxes = new[] { new Axis { Name = "Эффективность (Ускорение/Память)", TextSize = 14 } };
+            ];
+            EfficiencyChart.XAxes = [axis];
+            EfficiencyChart.YAxes = [new Axis 
+            {
+                Name = "Эффективность",
+                TextSize = 12
+            }];
         }
 
         private void UpdateStatisticalCharts(List<string> methodNames, List<double> timeValues)
@@ -97,8 +103,8 @@ namespace CommandProjectPV_425.Views
 
             // График погрешности
             var errorValues = timeValues.Select(t => t * 0.1).ToList();
-            ErrorChart.Series = new ISeries[]
-            {
+            ErrorChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = errorValues,
@@ -106,14 +112,14 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Orange),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F4} мс"
                 }
-            };
-            ErrorChart.XAxes = new[] { axis };
-            ErrorChart.YAxes = new[] { new Axis { Name = "Статистическая погрешность", TextSize = 14 } };
+            ];
+            ErrorChart.XAxes = [ axis ];
+            ErrorChart.YAxes = [new Axis { Name = "Статистическая погрешность", TextSize = 12 }];
 
             // График стандартного отклонения
             var stdDevValues = timeValues.Select(t => t * 0.05).ToList();
-            StdDevChart.Series = new ISeries[]
-            {
+            StdDevChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = stdDevValues,
@@ -121,13 +127,13 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Red),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F4} мс"
                 }
-            };
-            StdDevChart.XAxes = new[] { axis };
-            StdDevChart.YAxes = new[] { new Axis { Name = "Стандартное отклонение времени", TextSize = 14 } };
+            ];
+            StdDevChart.XAxes = [axis];
+            StdDevChart.YAxes = [new Axis { Name = "Стандартное отклонение", TextSize = 12 }];
 
             // График времени с погрешностью
-            TimeWithErrorChart.Series = new ISeries[]
-            {
+            TimeWithErrorChart.Series =
+            [
                 new LineSeries<double>
                 {
                     Values = timeValues,
@@ -138,9 +144,9 @@ namespace CommandProjectPV_425.Views
                     GeometryFill = new SolidColorPaint(SKColors.Blue),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2} мс"
                 }
-            };
-            TimeWithErrorChart.XAxes = new[] { axis };
-            TimeWithErrorChart.YAxes = new[] { new Axis { Name = "Время выполнения с доверительным интервалом", TextSize = 14 } };
+            ];
+            TimeWithErrorChart.XAxes = [axis];
+            TimeWithErrorChart.YAxes = [new Axis { Name = "Среднее время выполнения", TextSize = 12 }];
 
             // График профиля производительности
             UpdatePerformanceProfileChart(methodNames, timeValues);
@@ -151,8 +157,8 @@ namespace CommandProjectPV_425.Views
             var axis = CreateMethodAxis(methodNames);
 
             // График сравнения памяти и времени
-            MemoryTimeComparisonChart.Series = new ISeries[]
-            {
+            MemoryTimeComparisonChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = timeValues,
@@ -167,9 +173,9 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Red),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2} MB"
                 }
-            };
-            MemoryTimeComparisonChart.XAxes = new[] { axis };
-            MemoryTimeComparisonChart.YAxes = new[] { new Axis { Name = "Сравнение времени и памяти", TextSize = 14 } };
+            ];
+            MemoryTimeComparisonChart.XAxes = [axis];
+            MemoryTimeComparisonChart.YAxes = [new Axis { Name = "Сравнение времени и памяти", TextSize = 12 }];
 
             // График производительности
             var performanceValues = new List<double>();
@@ -183,8 +189,8 @@ namespace CommandProjectPV_425.Views
                 performanceValues.Add(performance);
             }
 
-            SpeedupMemoryChart.Series = new ISeries[]
-            {
+            SpeedupMemoryChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = performanceValues,
@@ -192,7 +198,7 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Teal),
                     TooltipLabelFormatter = point =>
                     {
-                        var index = (int)point.Context.Index;
+                        var index = point.Context.Index;
                         if (index >= 0 && index < methodNames.Count)
                         {
                             return $"{methodNames[index]}\n" +
@@ -204,9 +210,9 @@ namespace CommandProjectPV_425.Views
                         return "Нет данных";
                     }
                 }
-            };
-            SpeedupMemoryChart.XAxes = new[] { axis };
-            SpeedupMemoryChart.YAxes = new[] { new Axis { Name = "Общая оценка производительности", TextSize = 14 } };
+            ];
+            SpeedupMemoryChart.XAxes = [axis];
+            SpeedupMemoryChart.YAxes = [new Axis { Name = "Производительность", TextSize = 12 }];
         }
 
         private void UpdatePerformanceProfileChart(List<string> methodNames, List<double> timeValues)
@@ -217,8 +223,8 @@ namespace CommandProjectPV_425.Views
             var minTime = timeValues.Min();
             var performanceProfile = timeValues.Select(t => minTime / t).ToList();
 
-            PerformanceProfileChart.Series = new ISeries[]
-            {
+            PerformanceProfileChart.Series =
+            [
                 new ColumnSeries<double>
                 {
                     Values = performanceProfile,
@@ -226,9 +232,9 @@ namespace CommandProjectPV_425.Views
                     Fill = new SolidColorPaint(SKColors.Teal),
                     TooltipLabelFormatter = point => $"{point.PrimaryValue:F2}"
                 }
-            };
-            PerformanceProfileChart.XAxes = new[] { axis };
-            PerformanceProfileChart.YAxes = new[] { new Axis { Name = "Профиль производительности", TextSize = 14 } };
+            ];
+            PerformanceProfileChart.XAxes = [axis];
+            PerformanceProfileChart.YAxes = [new Axis { Name = "Относительная производительность", TextSize = 12 }];
         }
 
         private Axis CreateMethodAxis(List<string> methodNames)
@@ -237,11 +243,10 @@ namespace CommandProjectPV_425.Views
             {
                 Labels = methodNames.ToArray(),
                 LabelsRotation = 45,
-                TextSize = 12, // Увеличено с 10
+                TextSize = 12,
                 Name = "Методы",
                 NameTextSize = 14,
                 LabelsPaint = new SolidColorPaint(SKColors.Black) { FontFamily = "Arial" },
-                // Добавьте автоматическое обрезание длинных меток
                 Labeler = value =>
                 {
                     if (value < 0 || value >= methodNames.Count) return "";

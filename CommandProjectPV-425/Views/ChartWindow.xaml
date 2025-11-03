@@ -9,7 +9,6 @@
     Title="Графики производительности"
     Width="1200"
     Height="800"
-    ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"
     mc:Ignorable="d">

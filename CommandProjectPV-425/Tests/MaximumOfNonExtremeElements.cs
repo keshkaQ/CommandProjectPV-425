@@ -6,7 +6,6 @@ namespace CommandProjectPV_425.Tests
     public class MaximumOfNonExtremeElements
     {
         private readonly int _size;
-        public List<int>? _list;
         public int[]? _array;
         public MaximumOfNonExtremeElements(int size)
         {
@@ -17,54 +16,51 @@ namespace CommandProjectPV_425.Tests
         public void Setup()
         {
             var random = new Random(42);
-            _list = [.. Enumerable.Range(0, _size).Select(x => random.Next(25000))];
-            _array = _list.ToArray();
+            _array = Enumerable.Range(0, _size).Select(x => random.Next(25000)).ToArray();
+        }
+
+        public bool IsLocalMinOrMax(IList<int> numbers, int index)
+        {
+            if (numbers.Count <= 1) return false;
+
+            if (index == 0)
+                return numbers[0] > numbers[1] || numbers[0] < numbers[1];
+
+            if (index == numbers.Count - 1)
+                return numbers[^1] > numbers[^2] || numbers[^1] < numbers[^2];
+
+            bool isMin = numbers[index] < numbers[index - 1] && numbers[index] < numbers[index + 1];
+            bool isMax = numbers[index] > numbers[index - 1] && numbers[index] > numbers[index + 1];
+
+            return isMin || isMax;
         }
 
         [Benchmark(Baseline = true)]
         public int Array_For()
         {
-            int maxValue = int.MinValue;
-            bool foundAny = false;
-
+            int max = int.MinValue;
             for (int i = 0; i < _array.Length; i++)
-            {
-                if (!IsLocalMinOrMax(_array, i))
-                {
-                    foundAny = true;
-                    if (_array[i] > maxValue)
-                    {
-                        maxValue = _array[i];
-                    }
-                }
-            }
-
-            return foundAny ? maxValue : int.MinValue;
+                if (!IsLocalMinOrMax(_array, i) && _array[i] > max)
+                    max = _array[i];
+            return max;
         }
 
         [Benchmark]
-        public int List_For()
+        public int Array_LINQ()
         {
-            int maxValue = int.MinValue;
-            bool foundAny = false;
-
-            for (int i = 0; i < _list.Count; i++)
-            {
-                if (!IsLocalMinOrMax(_list, i))
-                {
-                    foundAny = true;
-                    if (_list[i] > maxValue)
-                    {
-                        maxValue = _list[i];
-                    }
-                }
-            }
-
-            return foundAny ? maxValue : int.MinValue;
+            var nonExtreme = _array.Where((x, i) => !IsLocalMinOrMax(_array, i));
+            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
         }
 
         [Benchmark]
-        public int Parallel_For_ConcurrentBag()
+        public int Array_PLINQ()
+        {
+            var nonExtreme = _array.AsParallel().Where((x, i) => !IsLocalMinOrMax(_array, i));
+            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
+        }
+
+        [Benchmark]
+        public int Parallel_ConcurrentBag()
         {
             var bag = new ConcurrentBag<int>();
 
@@ -113,7 +109,7 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Parallel_Foreach_Partitioner()
+        public int Parallel_Partitioner()
         {
             int finalMax = int.MinValue;
             object locker = new();
@@ -149,31 +145,47 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int List_LINQ()
+        public int Parallel_Invoke()
         {
-            var nonExtreme = _list.Where((x, i) => !IsLocalMinOrMax(_list, i));
-            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
-        }
+            int cores = Environment.ProcessorCount;
+            int chunk = (_array.Length + cores - 1) / cores;
+            int globalMax = int.MinValue;
+            object locker = new object();
 
-        [Benchmark]
-        public int Array_LINQ()
-        {
-            var nonExtreme = _array.Where((x, i) => !IsLocalMinOrMax(_array, i));
-            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
-        }
+            var actions = new Action[cores];
 
-        [Benchmark]
-        public int List_PLINQ()
-        {
-            var nonExtreme = _list.AsParallel().Where((x, i) => !IsLocalMinOrMax(_list, i));
-            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
-        }
+            for (int c = 0; c < cores; c++)
+            {
+                int start = c * chunk;
+                int end = Math.Min(start + chunk, _array.Length);
 
-        [Benchmark]
-        public int Array_PLINQ()
-        {
-            var nonExtreme = _array.AsParallel().Where((x, i) => !IsLocalMinOrMax(_array, i));
-            return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
+                actions[c] = () =>
+                {
+                    int localMax = int.MinValue;
+
+                    // чтобы не обращаться за пределы массива
+                    int safeStart = Math.Max(1, start);
+                    int safeEnd = Math.Min(end, _array.Length - 1);
+
+                    for (int i = safeStart; i < safeEnd; i++)
+                    {
+                        if (!IsLocalMinOrMax(_array, i))
+                        {
+                            if (_array[i] > localMax)
+                                localMax = _array[i];
+                        }
+                    }
+
+                    lock (locker)
+                    {
+                        if (localMax > globalMax)
+                            globalMax = localMax;
+                    }
+                };
+            }
+
+            Parallel.Invoke(actions);
+            return globalMax;
         }
 
         [Benchmark]
@@ -192,54 +204,52 @@ namespace CommandProjectPV_425.Tests
                 tasks[i] = Task.Run(() =>
                 {
                     int localMax = int.MinValue;
-                    bool foundAny = false;
-
                     for (int j = start; j < end; j++)
-                    {
-                        if (!IsLocalMinOrMax(_array, j))
-                        {
-                            foundAny = true;
-                            if (_array[j] > localMax)
-                            {
-                                localMax = _array[j];
-                            }
-                        }
-                    }
-
-                    return foundAny ? localMax : int.MinValue;
+                        if (!IsLocalMinOrMax(_array, j) && _array[j] > localMax)
+                            localMax = _array[j];
+                    return localMax;
                 });
             }
 
             Task.WaitAll(tasks);
 
-            int globalMax = int.MinValue;
-            foreach (var task in tasks)
-            {
-                int taskResult = task.Result;
-                if (taskResult > globalMax)
-                {
-                    globalMax = taskResult;
-                }
-            }
-
-            return globalMax;
+            return tasks.Max(t => t.Result);
         }
 
+        //[Benchmark]
+        //public int List_For()
+        //{
+        //    int maxValue = int.MinValue;
+        //    bool foundAny = false;
 
-        public bool IsLocalMinOrMax(IList<int> numbers, int index)
-        {
-            if (numbers.Count <= 1) return false;
+        //    for (int i = 0; i < _list.Count; i++)
+        //    {
+        //        if (!IsLocalMinOrMax(_list, i))
+        //        {
+        //            foundAny = true;
+        //            if (_list[i] > maxValue)
+        //            {
+        //                maxValue = _list[i];
+        //            }
+        //        }
+        //    }
 
-            if (index == 0)
-                return numbers[0] > numbers[1] || numbers[0] < numbers[1];
+        //    return foundAny ? maxValue : int.MinValue;
+        //}
 
-            if (index == numbers.Count - 1)
-                return numbers[^1] > numbers[^2] || numbers[^1] < numbers[^2];
 
-            bool isMin = numbers[index] < numbers[index - 1] && numbers[index] < numbers[index + 1];
-            bool isMax = numbers[index] > numbers[index - 1] && numbers[index] > numbers[index + 1];
+        //[Benchmark]
+        //public int List_LINQ()
+        //{
+        //    var nonExtreme = _list.Where((x, i) => !IsLocalMinOrMax(_list, i));
+        //    return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
+        //}
 
-            return isMin || isMax;
-        }
+        //[Benchmark]
+        //public int List_PLINQ()
+        //{
+        //    var nonExtreme = _list.AsParallel().Where((x, i) => !IsLocalMinOrMax(_list, i));
+        //    return nonExtreme.Any() ? nonExtreme.Max() : int.MinValue;
+        //}
     }
 }

@@ -46,6 +46,25 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
+        public int Array_LINQ() => _array.Count(IsPrime);
+
+        [Benchmark]
+        public int Array_PLINQ() => _array.AsParallel().Count(IsPrime);
+
+
+        [Benchmark]
+        public int Parallel_ConcurrentBag()
+        {
+            int total = 0;
+            Parallel.ForEach(_array, x =>
+            {
+                if (IsPrime(x))
+                    Interlocked.Increment(ref total);
+            });
+            return total;
+        }
+
+        [Benchmark]
         public int Parallel_For()
         {
             int total = 0;
@@ -63,52 +82,23 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Array_PLINQ()
-        {
-            return _array.AsParallel().Count(IsPrime);
-        }
-
-        [Benchmark]
-        public int Tasks_By_Cores()
-        {
-            int cores = Environment.ProcessorCount;
-            int chunk = _array.Length / cores;
-
-            var tasks = new Task<int>[cores];
-            for (int c = 0; c < cores; c++)
-            {
-                int start = c * chunk;
-                int end = (c == cores - 1) ? _array.Length : start + chunk;
-
-                tasks[c] = Task.Factory.StartNew(() =>
-                {
-                    int local = 0;
-                    for (int i = start; i < end; i++)
-                        if (IsPrime(_array[i])) local++;
-                    return local;
-                });
-            }
-
-            Task.WaitAll(tasks);
-            int total = 0;
-            for (int c = 0; c < cores; c++)
-                total += tasks[c].Result;
-            return total;
-        }
-
-        [Benchmark]
-        public int Parallel_ForEach()
+        public int Parallel_Partitioner()
         {
             int total = 0;
-            Parallel.ForEach(
-                _array,
+            var partitioner = Partitioner.Create(0, _array.Length);
+
+            Parallel.ForEach(partitioner,
                 () => 0,
-                (n, state, local) =>
+                (range, state, localCount) =>
                 {
-                    if (IsPrime(n)) local++;
-                    return local;
+                    for (int i = range.Item1; i < range.Item2; i++)
+                    {
+                        if (IsPrime(_array[i]))
+                            localCount++;
+                    }
+                    return localCount;
                 },
-                local => Interlocked.Add(ref total, local)
+                localCount => Interlocked.Add(ref total, localCount)
             );
             return total;
         }
@@ -149,109 +139,85 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Parallel_ForEach_ConcurrentBag()
-        {
-            int total = 0;
-            Parallel.ForEach(_array, x =>
-            {
-                if (IsPrime(x))
-                    Interlocked.Increment(ref total);
-            });
-            return total;
-        }
-
-        [Benchmark]
-        public int Parallel_For_Lists()
-        {
-            int threadCount = Environment.ProcessorCount;
-            var results = new int[threadCount];
-
-            int chunkSize = (_array.Length + threadCount - 1) / threadCount;
-
-            Parallel.For(0, threadCount, threadIdx =>
-            {
-                int start = threadIdx * chunkSize;
-                int end = Math.Min(start + chunkSize, _array.Length);
-                int localCount = 0;
-
-                for (int i = start; i < end; i++)
-                {
-                    if (IsPrime(_array[i]))
-                        localCount++;
-                }
-                results[threadIdx] = localCount;
-            });
-
-            int total = 0;
-            for (int i = 0; i < threadCount; i++)
-                total += results[i];
-
-            return total;
-        }
-
-        [Benchmark]
         public int Tasks_Run()
         {
-            int taskCount = Environment.ProcessorCount;
-            var tasks = new Task<int>[taskCount];
+            int cores = Environment.ProcessorCount;
+            int chunk = (_array.Length + cores - 1) / cores;
 
-            int chunkSize = (_array.Length + taskCount - 1) / taskCount;
+            var tasks = new Task<int>[cores];
 
-            for (int i = 0; i < taskCount; i++)
+            for (int c = 0; c < cores; c++)
             {
-                int start = i * chunkSize;
-                int end = Math.Min(start + chunkSize, _array.Length);
+                int start = c * chunk;
+                int end = (c == cores - 1) ? _array.Length : start + chunk;
 
-                tasks[i] = Task.Run(() =>
+                tasks[c] = Task.Run(() =>
                 {
-                    int localCount = 0;
-                    for (int j = start; j < end; j++)
-                    {
-                        if (IsPrime(_array[j]))
-                            localCount++;
-                    }
-                    return localCount;
+                    int local = 0;
+                    for (int i = start; i < end; i++)
+                        if (IsPrime(_array[i]))
+                            local++;
+                    return local;
                 });
             }
 
             Task.WaitAll(tasks);
-
-            int total = 0;
-            foreach (var task in tasks)
-                total += task.Result;
-
-            return total;
+            return tasks.Sum(t => t.Result);
         }
 
-        [Benchmark]
-        public int PLINQ_WithDegreeOfParallelism()
-        {
-            return _array
-                .AsParallel()
-                .WithDegreeOfParallelism(Environment.ProcessorCount)
-                .Count(IsPrime);
-        }
+        //[Benchmark]
+        //public int Parallel_ForEach()
+        //{
+        //    int total = 0;
+        //    Parallel.ForEach(
+        //        _array,
+        //        () => 0,
+        //        (n, state, local) =>
+        //        {
+        //            if (IsPrime(n)) local++;
+        //            return local;
+        //        },
+        //        local => Interlocked.Add(ref total, local)
+        //    );
+        //    return total;
+        //}
 
-        [Benchmark]
-        public int Partitioner_ForEach()
-        {
-            int total = 0;
-            var partitioner = Partitioner.Create(0, _array.Length);
+        //[Benchmark]
+        //public int Parallel_For_Lists()
+        //{
+        //    int threadCount = Environment.ProcessorCount;
+        //    var results = new int[threadCount];
 
-            Parallel.ForEach(partitioner,
-                () => 0,
-                (range, state, localCount) =>
-                {
-                    for (int i = range.Item1; i < range.Item2; i++)
-                    {
-                        if (IsPrime(_array[i]))
-                            localCount++;
-                    }
-                    return localCount;
-                },
-                localCount => Interlocked.Add(ref total, localCount)
-            );
-            return total;
-        }
+        //    int chunkSize = (_array.Length + threadCount - 1) / threadCount;
+
+        //    Parallel.For(0, threadCount, threadIdx =>
+        //    {
+        //        int start = threadIdx * chunkSize;
+        //        int end = Math.Min(start + chunkSize, _array.Length);
+        //        int localCount = 0;
+
+        //        for (int i = start; i < end; i++)
+        //        {
+        //            if (IsPrime(_array[i]))
+        //                localCount++;
+        //        }
+        //        results[threadIdx] = localCount;
+        //    });
+
+        //    int total = 0;
+        //    for (int i = 0; i < threadCount; i++)
+        //        total += results[i];
+
+        //    return total;
+        //}
+
+        //[Benchmark]
+        //public int PLINQ_WithDegreeOfParallelism()
+        //{
+        //    return _array
+        //        .AsParallel()
+        //        .WithDegreeOfParallelism(Environment.ProcessorCount)
+        //        .Count(IsPrime);
+        //}
     }
 }

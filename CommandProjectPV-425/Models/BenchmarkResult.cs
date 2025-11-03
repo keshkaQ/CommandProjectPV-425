@@ -1,18 +1,18 @@
-﻿namespace CommandProjectPV_425
+﻿namespace CommandProjectPV_425.Models
 {
     public class BenchmarkResult
     {
-        public string TaskType { get; set; }
-        public int DataSize { get; set; }
-        public string MethodName { get; set; }
-        public string ExecutionTime { get; set; }
-        public string MemoryUsed { get; set; }
-        public string Result { get; set; }
-        public string Speedup { get; set; }
+        public required string TaskType { get; set; }
+        public required int DataSize { get; set; }
+        public required string MethodName { get; set; }
+        public required string ExecutionTime { get; set; }
+        public required string MemoryUsed { get; set; }
+        public required string Result { get; set; }
+        public required string Speedup { get; set; }
         public DateTime Timestamp { get; set; }
-        public string Error { get; set; }
-        public string StdDev { get; set; }
-        public List<double> RawTimes { get; set; }
+        public required string Error { get; set; }
+        public required string StdDev { get; set; }
+        public required List<double> RawTimes { get; set; }
 
         public static (double mean, double error, double stdDev) CalculateStatistics(List<double> measurements)
         {
