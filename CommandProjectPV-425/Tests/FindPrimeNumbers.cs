@@ -1,24 +1,27 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 
 namespace CommandProjectPV_425.Tests
 {
     public class FindPrimeNumbers
     {
-        private int[]? _array;
-        private readonly int _size;
+        private int[] _array;
+        private readonly int maxValue = 25000;
 
-        public FindPrimeNumbers(int size)
-        {
-            _size = size;
-        }
+        public static int Size { get; set; } = 1000000;
 
         [GlobalSetup]
         public void Setup()
         {
             var random = new Random(42);
-            _array = Enumerable.Range(0, _size).Select(x => random.Next(25000)).ToArray();
+            _array = new int[Size];
+            for (int i = 0; i < Size; i++)
+            {
+                _array[i] = random.Next(maxValue);
+            }
         }
 
         private static bool IsPrime(int number)
@@ -46,6 +49,9 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
+        public int Array_PLINQ() => _array.AsParallel().Count(IsPrime);
+
+        [Benchmark]
         public int Parallel_For()
         {
             int total = 0;
@@ -63,52 +69,23 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Array_PLINQ()
-        {
-            return _array.AsParallel().Count(IsPrime);
-        }
-
-        [Benchmark]
-        public int Tasks_By_Cores()
-        {
-            int cores = Environment.ProcessorCount;
-            int chunk = _array.Length / cores;
-
-            var tasks = new Task<int>[cores];
-            for (int c = 0; c < cores; c++)
-            {
-                int start = c * chunk;
-                int end = (c == cores - 1) ? _array.Length : start + chunk;
-
-                tasks[c] = Task.Factory.StartNew(() =>
-                {
-                    int local = 0;
-                    for (int i = start; i < end; i++)
-                        if (IsPrime(_array[i])) local++;
-                    return local;
-                });
-            }
-
-            Task.WaitAll(tasks);
-            int total = 0;
-            for (int c = 0; c < cores; c++)
-                total += tasks[c].Result;
-            return total;
-        }
-
-        [Benchmark]
-        public int Parallel_ForEach()
+        public int Parallel_Partitioner()
         {
             int total = 0;
-            Parallel.ForEach(
-                _array,
+            var partitioner = Partitioner.Create(0, _array.Length);
+
+            Parallel.ForEach(partitioner,
                 () => 0,
-                (n, state, local) =>
+                (range, state, localCount) =>
                 {
-                    if (IsPrime(n)) local++;
-                    return local;
+                    for (int i = range.Item1; i < range.Item2; i++)
+                    {
+                        if (IsPrime(_array[i]))
+                            localCount++;
+                    }
+                    return localCount;
                 },
-                local => Interlocked.Add(ref total, local)
+                localCount => Interlocked.Add(ref total, localCount)
             );
             return total;
         }
@@ -149,109 +126,131 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Parallel_ForEach_ConcurrentBag()
-        {
-            int total = 0;
-            Parallel.ForEach(_array, x =>
-            {
-                if (IsPrime(x))
-                    Interlocked.Increment(ref total);
-            });
-            return total;
-        }
-
-        [Benchmark]
-        public int Parallel_For_Lists()
-        {
-            int threadCount = Environment.ProcessorCount;
-            var results = new int[threadCount];
-
-            int chunkSize = (_array.Length + threadCount - 1) / threadCount;
-
-            Parallel.For(0, threadCount, threadIdx =>
-            {
-                int start = threadIdx * chunkSize;
-                int end = Math.Min(start + chunkSize, _array.Length);
-                int localCount = 0;
-
-                for (int i = start; i < end; i++)
-                {
-                    if (IsPrime(_array[i]))
-                        localCount++;
-                }
-                results[threadIdx] = localCount;
-            });
-
-            int total = 0;
-            for (int i = 0; i < threadCount; i++)
-                total += results[i];
-
-            return total;
-        }
-
-        [Benchmark]
         public int Tasks_Run()
         {
-            int taskCount = Environment.ProcessorCount;
-            var tasks = new Task<int>[taskCount];
+            int cores = Environment.ProcessorCount;
+            int chunk = (_array.Length + cores - 1) / cores;
 
-            int chunkSize = (_array.Length + taskCount - 1) / taskCount;
+            var tasks = new Task<int>[cores];
 
-            for (int i = 0; i < taskCount; i++)
+            for (int c = 0; c < cores; c++)
             {
-                int start = i * chunkSize;
-                int end = Math.Min(start + chunkSize, _array.Length);
+                int start = c * chunk;
+                int end = (c == cores - 1) ? _array.Length : start + chunk;
 
-                tasks[i] = Task.Run(() =>
+                tasks[c] = Task.Run(() =>
                 {
-                    int localCount = 0;
-                    for (int j = start; j < end; j++)
-                    {
-                        if (IsPrime(_array[j]))
-                            localCount++;
-                    }
-                    return localCount;
+                    int local = 0;
+                    for (int i = start; i < end; i++)
+                        if (IsPrime(_array[i]))
+                            local++;
+                    return local;
                 });
             }
 
             Task.WaitAll(tasks);
-
-            int total = 0;
-            foreach (var task in tasks)
-                total += task.Result;
-
-            return total;
+            return tasks.Sum(t => t.Result);
         }
 
-        [Benchmark]
-        public int PLINQ_WithDegreeOfParallelism()
-        {
-            return _array
-                .AsParallel()
-                .WithDegreeOfParallelism(Environment.ProcessorCount)
-                .Count(IsPrime);
-        }
 
         [Benchmark]
-        public int Partitioner_ForEach()
+        public unsafe int Array_Unsafe()
         {
-            int total = 0;
-            var partitioner = Partitioner.Create(0, _array.Length);
+            int length = _array.Length;
+            int count0 = 0, count1 = 0, count2 = 0, count3 = 0;
 
-            Parallel.ForEach(partitioner,
-                () => 0,
-                (range, state, localCount) =>
+            fixed (int* p = _array)
+            {
+                int* ptr = p;
+                int* endVectorized = p + (length & ~3);
+
+                while (ptr < endVectorized)
                 {
-                    for (int i = range.Item1; i < range.Item2; i++)
+                    int n0 = ptr[0], n1 = ptr[1], n2 = ptr[2], n3 = ptr[3];
+                    if (IsPrime(n0)) count0++;
+                    if (IsPrime(n1)) count1++;
+                    if (IsPrime(n2)) count2++;
+                    if (IsPrime(n3)) count3++;
+                    ptr += 4;
+                }
+
+                for (; ptr < p + length; ptr++)
+                {
+                    if (IsPrime(*ptr)) count0++;
+                }
+            }
+
+            return count0 + count1 + count2 + count3;
+        }
+
+
+        [Benchmark]
+        public int Array_SIMD()
+        {
+            var array = _array;
+            int length = array.Length;
+            int vectorSize = Vector<int>.Count;
+            int count = 0;
+
+            int i = 0;
+            for (; i <= length - vectorSize; i += vectorSize)
+            {
+                var v = new Vector<int>(array, i);
+                // Избегаем bounds check в v[j]
+                for (int j = 0; j < vectorSize; j++)
+                {
+                    int n = v[j];
+                    if (IsPrime(n)) count++;
+                }
+            }
+
+            // Обработка остатка
+            for (; i < length; i++)
+            {
+                int n = array[i];
+                if (IsPrime(n)) count++;
+            }
+
+            return count;
+        }
+
+        [Benchmark]
+        public unsafe int Array_SIMD_Intrinsics()
+        {
+            if (!Avx2.IsSupported)
+                throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
+
+            var array = _array;
+            int length = array.Length;
+            int count = 0;
+
+            fixed (int* ptr = array)
+            {
+                int i = 0;
+                int limit = length - (length % 8);
+
+                int* temp = stackalloc int[8]; // Выделяем один раз
+
+                for (; i < limit; i += 8)
+                {
+                    var v = Avx2.LoadVector256(ptr + i);
+                    Avx2.Store(temp, v);
+
+                    for (int j = 0; j < 8; j++)
                     {
-                        if (IsPrime(_array[i]))
-                            localCount++;
+                        int n = temp[j];
+                        if (IsPrime(n)) count++;
                     }
-                    return localCount;
-                },
-                localCount => Interlocked.Add(ref total, localCount)
-            );
-            return total;
+                }
+
+                for (; i < length; i++)
+                {
+                    int n = ptr[i];
+                    if (IsPrime(n)) count++;
+                }
+            }
+
+            return count;
         }
     }
 }
