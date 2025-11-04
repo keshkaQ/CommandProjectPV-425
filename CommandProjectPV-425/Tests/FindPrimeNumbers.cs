@@ -1,24 +1,27 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 
 namespace CommandProjectPV_425.Tests
 {
     public class FindPrimeNumbers
     {
-        private int[]? _array;
-        private readonly int _size;
+        private int[] _array;
+        private readonly int maxValue = 25000;
 
-        public FindPrimeNumbers(int size)
-        {
-            _size = size;
-        }
+        public static int Size { get; set; } = 1000000;
 
         [GlobalSetup]
         public void Setup()
         {
             var random = new Random(42);
-            _array = Enumerable.Range(0, _size).Select(x => random.Next(25000)).ToArray();
+            _array = new int[Size];
+            for (int i = 0; i < Size; i++)
+            {
+                _array[i] = random.Next(maxValue);
+            }
         }
 
         private static bool IsPrime(int number)
@@ -46,23 +49,7 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Array_LINQ() => _array.Count(IsPrime);
-
-        [Benchmark]
         public int Array_PLINQ() => _array.AsParallel().Count(IsPrime);
-
-
-        [Benchmark]
-        public int Parallel_ConcurrentBag()
-        {
-            int total = 0;
-            Parallel.ForEach(_array, x =>
-            {
-                if (IsPrime(x))
-                    Interlocked.Increment(ref total);
-            });
-            return total;
-        }
 
         [Benchmark]
         public int Parallel_For()
@@ -165,59 +152,105 @@ namespace CommandProjectPV_425.Tests
             return tasks.Sum(t => t.Result);
         }
 
-        //[Benchmark]
-        //public int Parallel_ForEach()
-        //{
-        //    int total = 0;
-        //    Parallel.ForEach(
-        //        _array,
-        //        () => 0,
-        //        (n, state, local) =>
-        //        {
-        //            if (IsPrime(n)) local++;
-        //            return local;
-        //        },
-        //        local => Interlocked.Add(ref total, local)
-        //    );
-        //    return total;
-        //}
 
-        //[Benchmark]
-        //public int Parallel_For_Lists()
-        //{
-        //    int threadCount = Environment.ProcessorCount;
-        //    var results = new int[threadCount];
+        [Benchmark]
+        public unsafe int Array_Unsafe()
+        {
+            int length = _array.Length;
+            int count0 = 0, count1 = 0, count2 = 0, count3 = 0;
 
-        //    int chunkSize = (_array.Length + threadCount - 1) / threadCount;
+            fixed (int* p = _array)
+            {
+                int* ptr = p;
+                int* endVectorized = p + (length & ~3);
 
-        //    Parallel.For(0, threadCount, threadIdx =>
-        //    {
-        //        int start = threadIdx * chunkSize;
-        //        int end = Math.Min(start + chunkSize, _array.Length);
-        //        int localCount = 0;
+                while (ptr < endVectorized)
+                {
+                    int n0 = ptr[0], n1 = ptr[1], n2 = ptr[2], n3 = ptr[3];
+                    if (IsPrime(n0)) count0++;
+                    if (IsPrime(n1)) count1++;
+                    if (IsPrime(n2)) count2++;
+                    if (IsPrime(n3)) count3++;
+                    ptr += 4;
+                }
 
-        //        for (int i = start; i < end; i++)
-        //        {
-        //            if (IsPrime(_array[i]))
-        //                localCount++;
-        //        }
-        //        results[threadIdx] = localCount;
-        //    });
+                for (; ptr < p + length; ptr++)
+                {
+                    if (IsPrime(*ptr)) count0++;
+                }
+            }
 
-        //    int total = 0;
-        //    for (int i = 0; i < threadCount; i++)
-        //        total += results[i];
+            return count0 + count1 + count2 + count3;
+        }
 
-        //    return total;
-        //}
 
-        //[Benchmark]
-        //public int PLINQ_WithDegreeOfParallelism()
-        //{
-        //    return _array
-        //        .AsParallel()
-        //        .WithDegreeOfParallelism(Environment.ProcessorCount)
-        //        .Count(IsPrime);
-        //}
+        [Benchmark]
+        public int Array_SIMD()
+        {
+            var array = _array;
+            int length = array.Length;
+            int vectorSize = Vector<int>.Count;
+            int count = 0;
+
+            int i = 0;
+            for (; i <= length - vectorSize; i += vectorSize)
+            {
+                var v = new Vector<int>(array, i);
+                // Избегаем bounds check в v[j]
+                for (int j = 0; j < vectorSize; j++)
+                {
+                    int n = v[j];
+                    if (IsPrime(n)) count++;
+                }
+            }
+
+            // Обработка остатка
+            for (; i < length; i++)
+            {
+                int n = array[i];
+                if (IsPrime(n)) count++;
+            }
+
+            return count;
+        }
+
+        [Benchmark]
+        public unsafe int Array_SIMD_Intrinsics()
+        {
+            if (!Avx2.IsSupported)
+                throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
+
+            var array = _array;
+            int length = array.Length;
+            int count = 0;
+
+            fixed (int* ptr = array)
+            {
+                int i = 0;
+                int limit = length - (length % 8);
+
+                int* temp = stackalloc int[8]; // Выделяем один раз
+
+                for (; i < limit; i += 8)
+                {
+                    var v = Avx2.LoadVector256(ptr + i);
+                    Avx2.Store(temp, v);
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        int n = temp[j];
+                        if (IsPrime(n)) count++;
+                    }
+                }
+
+                for (; i < length; i++)
+                {
+                    int n = ptr[i];
+                    if (IsPrime(n)) count++;
+                }
+            }
+
+            return count;
+        }
     }
 }

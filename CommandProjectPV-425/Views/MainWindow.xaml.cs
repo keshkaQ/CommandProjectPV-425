@@ -1,7 +1,8 @@
-﻿using CommandProjectPV_425.Models;
+﻿using BenchmarkDotNet.Reports;
+using BenchmarkDotNet.Running;
+using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Tests;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -60,41 +61,33 @@ namespace CommandProjectPV_425.Views
             RunBenchmarkBtn.IsEnabled = true;
         }
 
-        private (string typeTask, int size, int numberOfRuns) GetTypeAndSizeTask()
+        private (string typeTask, int size) GetTypeAndSizeTask()
         {
             try
             {
                 var taskType = ((ComboBoxItem)TaskTypeComboBox.SelectedItem).Content.ToString();
                 var sizeText = ((ComboBoxItem)SizeComboBox.SelectedItem).Content.ToString();
-                var countOfRuns = int.Parse(((ComboBoxItem)RunsComboBox.SelectedItem).Content.ToString());
                 var size = int.Parse(sizeText.Replace(",", ""));
-                return (taskType, size, countOfRuns);
+                return (taskType, size);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Выберите тип задачи, размер входных данных и количество тестов", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return (string.Empty, default,default);
+                MessageBox.Show("Выберите тип задачи и размер входных данных", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return (string.Empty, default);
             }
         }
 
-        private object InitializeBenchmark(string taskType, int size)
+        private Type GetBenchmarkType(string taskType)
         {
-            try
+            return taskType switch
             {
-                return taskType switch
-                {
-                    "Count Numbers Above Average" => new CountAboveAverage(size),
-                    "Divisible Three or Five" => new DivisibleThreeOrFive(size),
-                    "Find Prime Numbers" => new FindPrimeNumbers(size),
-                    "Maximum Of Non Extreme Elements" => new MaximumOfNonExtremeElements(size),
-                    _ => throw new ArgumentException($"Неизвестный тип задачи: {taskType}")
-                };
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка инициализации теста: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
-            }
+                "Count Numbers Above Average" => typeof(CountAboveAverage),
+                "Divisible Three or Five" => typeof(DivisibleThreeOrFive),
+                "Find Prime Numbers" => typeof(FindPrimeNumbers),
+                "Maximum Of Non Extreme Elements" => typeof(MaximumOfNonExtremeElements),
+                "Max Frequency Of Elements" => typeof(MaxFrequencyOfElements),
+                _ => throw new ArgumentException($"Неизвестный тип задачи: {taskType}")
+            };
         }
 
         private void ShowChartsBtn_Click(object sender, RoutedEventArgs e)
@@ -111,166 +104,189 @@ namespace CommandProjectPV_425.Views
                 _chartWindow.Closed += (s, args) => _chartWindow = null;
             }
 
-            // Обновляем графики данными
-            var methodNames = Results.Select(r => r.MethodName).ToList();
-            var timeValues = Results.Select(r => double.Parse(r.ExecutionTime.Replace(" ms", ""))).ToList();
-            var memoryValues = Results.Select(r => double.Parse(r.MemoryUsed.Replace(" MB", ""))).ToList();
-            var speedupValues = Results.Select(r => double.Parse(r.Speedup.Replace("x", ""))).ToList();
+            // Фильтруем только успешные результаты
+            var successfulResults = Results.Where(r => r.ExecutionTime != "Failed").ToList();
 
-            _chartWindow.UpdateCharts(methodNames, timeValues, memoryValues, speedupValues);
+            if (!successfulResults.Any())
+            {
+                MessageBox.Show("Нет успешных результатов для отображения графиков.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var methodNames = successfulResults.Select(r => r.MethodName).ToList();
+
+            // Парсим время выполнения
+            var timeValues = successfulResults.Select(r =>
+            {
+                var timeStr = r.ExecutionTime;
+                if (timeStr.EndsWith(" s"))
+                    return double.Parse(timeStr.Replace(" s", "")) * 1000; // Конвертируем в мс
+                else if (timeStr.EndsWith(" ms"))
+                    return double.Parse(timeStr.Replace(" ms", ""));
+                else if (timeStr.EndsWith(" μs"))
+                    return double.Parse(timeStr.Replace(" μs", "")) / 1000; // Конвертируем в мс
+                else
+                    return 0.0;
+            }).ToList();
+
+            // Парсим ускорение
+            var speedupValues = successfulResults.Select(r =>
+            {
+                var speedupStr = r.Speedup;
+                return double.Parse(speedupStr.Replace("x", ""));
+            }).ToList();
+
+            // Пустой список для памяти (больше не используется)
+            var emptyMemoryValues = new List<double>();
+
+            _chartWindow.UpdateCharts(methodNames, timeValues, emptyMemoryValues, speedupValues);
             _chartWindow.Show();
             _chartWindow.Focus();
-        }
-
-        private List<(string Name, Func<int> Test)> GetTestsForTask(string taskType, object benchmark)
-        {
-            return taskType switch
-            {
-                "Count Numbers Above Average" when benchmark is CountAboveAverage countBenchmark =>
-                new List<(string, Func<int>)>
-                {
-                    ("Array For", countBenchmark.Array_For),
-                    ("Array LINQ", countBenchmark.Array_LINQ),
-                    ("Array PLINQ", countBenchmark.Array_PLINQ),
-                    ("Parallel ConcurrentBag", countBenchmark.Parallel_ConcurrentBag),
-                    ("Parallel For", countBenchmark.Parallel_For),
-                    ("Parallel Partitioner", countBenchmark.Parallel_Partitioner),
-                    ("Parallel Invoke", countBenchmark.Parallel_Invoke),
-                    ("Tasks Run", countBenchmark.Tasks_Run)
-                },
-
-
-                "Divisible Three or Five" when benchmark is DivisibleThreeOrFive divBenchmark =>
-                new List<(string, Func<int>)>
-                {
-                    ("Array For", divBenchmark.Array_For),
-                    ("Array LINQ", divBenchmark.Array_LINQ),
-                    ("Array PLINQ", divBenchmark.Array_PLINQ),
-                    ("Parallel ConcurrentBag", divBenchmark.Parallel_ConcurrentBag),
-                    ("Parallel For", divBenchmark.Parallel_For),
-                    ("Parallel Partitioner", divBenchmark.Parallel_Partitioner),
-                    ("Parallel Invoke", divBenchmark.Parallel_Invoke),
-                    ("Tasks Run", divBenchmark.Tasks_Run)
-                },
-
-                "Find Prime Numbers" when benchmark is FindPrimeNumbers primeBenchmark =>
-                new List<(string, Func<int>)>
-                {
-                    ("Array For", primeBenchmark.Array_For),
-                    ("Array LINQ", primeBenchmark.Array_LINQ),
-                    ("Array PLINQ", primeBenchmark.Array_PLINQ),
-                    ("Parallel ConcurrentBag", primeBenchmark.Parallel_ConcurrentBag),
-                    ("Parallel For", primeBenchmark.Parallel_For),
-                    ("Parallel Partitioner", primeBenchmark.Parallel_Partitioner),
-                    ("Parallel Invoke", primeBenchmark.Parallel_Invoke),
-                    ("Tasks Run", primeBenchmark.Tasks_Run)
-                 },
-
-                "Maximum Of Non Extreme Elements" when benchmark is MaximumOfNonExtremeElements extremeBenchmark =>
-                new List<(string, Func<int>)>
-                {
-                     ("Array For", extremeBenchmark.Array_For),
-                    ("Array LINQ", extremeBenchmark.Array_LINQ),
-                    ("Array PLINQ", extremeBenchmark.Array_PLINQ),
-                    ("Parallel ConcurrentBag", extremeBenchmark.Parallel_ConcurrentBag),
-                    ("Parallel For", extremeBenchmark.Parallel_For),
-                    ("Parallel Partitioner", extremeBenchmark.Parallel_Partitioner),
-                    ("Parallel Invoke", extremeBenchmark.Parallel_Invoke),
-                    ("Tasks Run", extremeBenchmark.Tasks_Run)
-                },
-                _ => new List<(string, Func<int>)>()
-            };
         }
 
         private async void RunBenchmarkBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                TurnOffButtons(); 
-                var (typeTask, size, numberOfRuns) = GetTypeAndSizeTask();
+                TurnOffButtons();
+                var (typeTask, size) = GetTypeAndSizeTask();
                 if (string.IsNullOrEmpty(typeTask)) return;
 
-                var benchmark = InitializeBenchmark(typeTask, size);
-                if (benchmark == null)  return;
-
-                var setupMethod = benchmark.GetType().GetMethod("Setup");
-                setupMethod?.Invoke(benchmark, null);
-
-                var tests = GetTestsForTask(typeTask, benchmark);
-                if (tests == null || tests.Count == 0)
+                var benchmarkType = GetBenchmarkType(typeTask);
+                if (benchmarkType == null)
                 {
-                    MessageBox.Show("Не найдены тесты для выбранной задачи", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Не удалось определить тип бенчмарка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                double baselineTime = 0;
+                StatusText.Text = "Запуск BenchmarkDotNet...";
 
-                for (int i = 0; i < tests.Count; i++)
+                // Устанавливаем размер данных для бенчмарка
+                SetBenchmarkSize(benchmarkType, size);
+
+                // Запускаем бенчмарк в отдельном потоке чтобы не блокировать UI
+                await Task.Run(() =>
                 {
-                    var test = tests[i];
-                    StatusText.Text = $"Выполнение: {test.Name}... ({i + 1}/{tests.Count})";
+                    var summary = BenchmarkRunner.Run(benchmarkType);
+                    ProcessBenchmarkSummary(summary, typeTask, size);
+                });
 
-                    var timeMeasurements = new List<double>();
-                    var memoryMeasurements = new List<double>();
-                    object firstResult = null;
-
-                    for (int run = 0; run < numberOfRuns; run++)
-                    {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                        GC.Collect();
-
-                        var memoryBefore = GC.GetTotalMemory(true);
-                        var stopwatch = Stopwatch.StartNew();
-                        var result = await Task.Run(() => test.Test());
-                        stopwatch.Stop();
-                        var memoryAfter = GC.GetTotalMemory(false);
-
-                        if (run == 0) firstResult = result;
-
-                        timeMeasurements.Add(stopwatch.Elapsed.TotalMilliseconds);
-                        memoryMeasurements.Add(Math.Max(0, (memoryAfter - memoryBefore) / (1024 * 1024.0)));
-
-                        await Task.Delay(50);
-                    }
-                    var timeStats = BenchmarkResult.CalculateStatistics(timeMeasurements);
-                    var memoryStats = BenchmarkResult.CalculateStatistics(memoryMeasurements);
-
-                    if (i == 0) baselineTime = timeStats.mean;
-
-                    var speedup = baselineTime > 0 ? baselineTime / timeStats.mean : 1;
-
-                    Results.Add(new BenchmarkResult
-                    {
-                        TaskType = typeTask,
-                        DataSize = size,
-                        MethodName = test.Name,
-                        ExecutionTime = timeStats.mean.ToString("F2") + " ms",
-                        MemoryUsed = memoryStats.mean.ToString("F2") + " MB",
-                        Result = firstResult?.ToString() ?? "0",
-                        Speedup = speedup.ToString("F2") + "x",
-                        Timestamp = DateTime.Now,
-                        Error = timeStats.error.ToString("F4") + " ms",
-                        StdDev = timeStats.stdDev.ToString("F4") + " ms",
-                        RawTimes = timeMeasurements
-                    });
-
-                    UpdateProgress((i + 1) * 100 / tests.Count);
-                }
-
-                StatusText.Text = $"Тестирование завершено! Протестировано {tests.Count} методов для задачи '{typeTask}'.";
+                StatusText.Text = $"Тестирование завершено! Протестировано {Results.Count} методов для задачи '{typeTask}'.";
                 TurnOnButtons();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 StatusText.Text = "Ошибка при выполнении тестов";
-                TurnOnButtons(); 
+                TurnOnButtons();
             }
             finally
             {
                 RunBenchmarkBtn.IsEnabled = true;
             }
+        }
+
+        private void SetBenchmarkSize(Type benchmarkType, int size)
+        {
+            // Устанавливаем размер данных через статические свойства
+            if (benchmarkType == typeof(CountAboveAverage))
+                CountAboveAverage.Size = size;
+            else if (benchmarkType == typeof(DivisibleThreeOrFive))
+                DivisibleThreeOrFive.Size = size;
+            else if (benchmarkType == typeof(FindPrimeNumbers))
+                FindPrimeNumbers.Size = size;
+            else if (benchmarkType == typeof(MaximumOfNonExtremeElements))
+                MaximumOfNonExtremeElements.Size = size;
+            else if (benchmarkType == typeof(MaxFrequencyOfElements))
+                MaxFrequencyOfElements.Size = size;
+        }
+
+        private void ProcessBenchmarkSummary(Summary summary, string taskType, int dataSize)
+        {
+            Dispatcher.Invoke(() => Results.Clear());
+
+            // Найти базовый метод (тот, который помечен [Benchmark(Baseline = true)])
+            var baselineReport = summary.Reports.FirstOrDefault(r =>
+                r.BenchmarkCase.Descriptor.Baseline);
+
+            double baselineTimeNs = 0;
+            bool baselineFound = false;
+
+            if (baselineReport != null && baselineReport.Success && baselineReport.ResultStatistics != null)
+            {
+                baselineTimeNs = baselineReport.ResultStatistics.Mean;
+                baselineFound = true;
+            }
+
+            int totalReports = summary.Reports.Count();
+            int currentReport = 0;
+
+            foreach (var report in summary.Reports)
+            {
+                currentReport++;
+                var benchmarkCase = report.BenchmarkCase;
+                var methodName = FormatMethodName(benchmarkCase.Descriptor.WorkloadMethod.Name);
+
+                var result = report.ResultStatistics;
+                var meanTimeNs = result.Mean;
+                var meanTimeUs = meanTimeNs / 1_000.0;
+
+                // Расчет ускорения относительно базового метода
+                var speedup = baselineTimeNs / meanTimeNs;
+
+                // Форматируем ускорение
+                string speedupFormatted = speedup switch
+                {
+                    < 0.01 => speedup.ToString("F3") + "x",
+                    < 0.1 => speedup.ToString("F3") + "x",
+                    < 1 => speedup.ToString("F2") + "x",
+                    _ => speedup.ToString("F2") + "x"
+                };
+
+                var benchmarkResult = new BenchmarkResult
+                {
+                    TaskType = taskType,
+                    DataSize = dataSize,
+                    MethodName = methodName,
+                    ExecutionTime = FormatTimeUs(meanTimeUs),
+                    Speedup = speedupFormatted,
+                    Timestamp = DateTime.Now,
+                    RawTimes = new List<double> { meanTimeUs }
+                };
+
+                Dispatcher.Invoke(() => Results.Add(benchmarkResult));
+
+                var progress = (currentReport * 100) / totalReports;
+                Dispatcher.Invoke(() => UpdateProgress(progress, $"Обработка: {methodName}"));
+            }
+        }
+
+        private string FormatTimeUs(double timeUs)
+        {
+            if (timeUs >= 1000)
+                return (timeUs / 1000).ToString("F2") + " ms";
+            else if (timeUs >= 1)
+                return timeUs.ToString("F1") + " μs";
+            else
+                return (timeUs * 1000).ToString("F1") + " ns";
+        }
+
+
+        private string FormatMethodName(string methodName)
+        {
+            return methodName switch
+            {
+                "Array_For" => "Array For",
+                "Array_PLINQ" => "Array PLINQ",
+                "Parallel_For" => "Parallel For",
+                "Parallel_Partitioner" => "Parallel Partitioner",
+                "Parallel_Invoke" => "Parallel Invoke",
+                "Tasks_Run" => "Tasks Run",
+                "Array_SIMD" => "Array SIMD",
+                "Array_SIMD_Intrinsics" => "Array SIMD  Intrinsics",
+                "Array_Unsafe" => "Array Unsafe",
+                _ => methodName
+            };
         }
         private async void SaveToDbBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -303,10 +319,9 @@ namespace CommandProjectPV_425.Views
                 StatusText.Text = text;
         }
 
-
         private void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
-
+            // Реализация
         }
 
         private void SaveToJsonClick(object sender, RoutedEventArgs e)
@@ -334,12 +349,8 @@ namespace CommandProjectPV_425.Views
                     r.DataSize,
                     r.MethodName,
                     r.ExecutionTime,
-                    r.MemoryUsed,
-                    r.Result,
                     r.Speedup,
                     Timestamp = r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
-                    r.Error,
-                    r.StdDev,
                     r.RawTimes
                 }).ToList();
 
@@ -368,11 +379,10 @@ namespace CommandProjectPV_425.Views
             {
                 MessageBox.Show("Результаты сохранены в базе данных");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-
+                // Обработка ошибок
             }
-
         }
     }
 }

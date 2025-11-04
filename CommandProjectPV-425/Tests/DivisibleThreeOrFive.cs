@@ -1,22 +1,26 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace CommandProjectPV_425.Tests
 {
     public class DivisibleThreeOrFive
     {
         private int[] _array;
-        private int _size { get; set; }
-        public DivisibleThreeOrFive(int size)
-        {
-            _size = size;
-        }
+        private readonly int maxValue = 25000;
+        public static int Size { get; set; } = 1000000;
 
         [GlobalSetup]
         public void Setup()
         {
             var random = new Random(42);
-            _array = Enumerable.Range(0, _size).Select(x => random.Next(25000)).ToArray();
+            _array = new int[Size];
+            for (int i = 0; i < Size; i++)
+            {
+                _array[i] = random.Next(maxValue);
+            }
         }
 
         private static bool IsDivisibleBy3And5(int x) => x % 3 == 0 && x % 5 == 0;
@@ -32,30 +36,7 @@ namespace CommandProjectPV_425.Tests
         }
 
         [Benchmark]
-        public int Array_LINQ()
-        {
-            return _array.Count(IsDivisibleBy3And5);
-        }
-
-
-        [Benchmark]
-        public int Array_PLINQ()
-        {
-            return _array.AsParallel().Count(IsDivisibleBy3And5);
-        }
-
-        [Benchmark]
-        public int Parallel_ConcurrentBag()
-        {
-            var bag = new ConcurrentBag<int>();
-            Parallel.ForEach(_array, item =>
-            {
-                if (IsDivisibleBy3And5(item))
-                    bag.Add(item);
-            });
-
-            return bag.Count;
-        }
+        public int Array_PLINQ() =>_array.AsParallel().Count(IsDivisibleBy3And5);
 
         [Benchmark]
         public int Parallel_For()
@@ -73,7 +54,6 @@ namespace CommandProjectPV_425.Tests
 
             return totalCount;
         }
-
 
         [Benchmark]
         public int Parallel_Partitioner()
@@ -149,55 +129,106 @@ namespace CommandProjectPV_425.Tests
             return tasks.Sum(t => t.Result);
         }
 
-        //[Benchmark]
-        //public int Tasks_Factory()
-        //{
-        //    int processorCount = Environment.ProcessorCount;
-        //    int chunkSize = _array.Length / processorCount;
 
-        //    var tasks = new Task<int>[processorCount];
-        //    for (int i = 0; i < processorCount; i++)
-        //    {
-        //        int start = i * chunkSize;
-        //        int end = (i == processorCount - 1) ? _array.Length : start + chunkSize;
+        [Benchmark]
+        public unsafe int Array_Unsafe()
+        {
+            int length = _array.Length;
+            int count = 0;
 
-        //        tasks[i] = Task.Factory.StartNew(() =>
-        //        {
-        //            int localCount = 0;
-        //            for (int j = start; j < end; j++)
-        //                if (_array[j] % 3 == 0 && _array[j] % 5 == 0)
-        //                    localCount++;
-        //            return localCount;
-        //        });
-        //    }
+            fixed (int* ptr = _array)
+            {
+                int* p = ptr;
+                int* end = ptr + length;
 
-        //    return Task.WhenAll(tasks).Result.Sum();
-        //}
+                while (p + 8 <= end)
+                {
+                    if (IsDivisibleBy3And5(p[0])) count++;
+                    if (IsDivisibleBy3And5(p[1])) count++;
+                    if (IsDivisibleBy3And5(p[2])) count++;
+                    if (IsDivisibleBy3And5(p[3])) count++;
+                    if (IsDivisibleBy3And5(p[4])) count++;
+                    if (IsDivisibleBy3And5(p[5])) count++;
+                    if (IsDivisibleBy3And5(p[6])) count++;
+                    if (IsDivisibleBy3And5(p[7])) count++;
+                    p += 8;
+                }
 
-        //[Benchmark]
-        //public int PLINQ_WithDegreeOfParallelism()
-        //{
-        //    return _array.AsParallel()
-        //               .WithDegreeOfParallelism(Environment.ProcessorCount)
-        //               .Count(x => x % 3 == 0 && x % 5 == 0);
-        //}
+                // Остаток
+                while (p < end)
+                {
+                    if (IsDivisibleBy3And5(*p))
+                        count++;
+                    p++;
+                }
+            }
 
-        //[Benchmark]
-        //public int PLINQ_ForceParallel()
-        //{
-        //    return _array.AsParallel()
-        //               .WithExecutionMode(ParallelExecutionMode.ForceParallelism)
-        //               .Count(x => x % 3 == 0 && x % 5 == 0);
-        //}
+            return count;
+        }
 
-        //[Benchmark]
-        //public int List_For()
-        //{
-        //    int count = 0;
-        //    for (int i = 0; i < _list.Count; i++)
-        //        if (IsDivisibleBy3And5(_list[i]))
-        //            count++;
-        //    return count;
-        //}
+        [Benchmark]
+        public int Array_SIMD()
+        {
+            var array = _array;
+            int length = array.Length;
+            int vectorSize = Vector<int>.Count;
+            int count = 0;
+            int i = 0;
+
+            for (; i <= length - vectorSize; i += vectorSize)
+            {
+                var v = new Vector<int>(array, i);
+
+                // Проверяем без вызова функции
+                for (int j = 0; j < vectorSize; j++)
+                    count += (IsDivisibleBy3And5(v[j])) ? 1 : 0;
+            }
+
+            for (; i < length; i++)
+                count += (IsDivisibleBy3And5(array[i])) ? 1 : 0;
+
+            return count;
+        }
+
+
+        [Benchmark]
+        public unsafe int Array_SIMD_Intrinsics()
+        {
+            if (!Avx2.IsSupported)
+                throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
+
+            int length = _array.Length;
+            int count = 0;
+
+            fixed (int* ptr = _array)
+            {
+                int i = 0;
+
+                var vCount = Vector256<int>.Zero;
+                var vOnes = Vector256.Create(1);
+                int vectorSize = 8;
+
+                for (; i <= length - vectorSize; i += vectorSize)
+                {
+                    var v = Avx2.LoadVector256(ptr + i);
+
+                    // Проверяем каждый элемент скалярно (самый надежный способ)
+                    for (int j = 0; j < vectorSize; j++)
+                    {
+                        if (IsDivisibleBy3And5(v.GetElement(j)))
+                            count++;
+                    }
+                }
+
+                // Обработка остатка
+                for (; i < length; i++)
+                {
+                    if (IsDivisibleBy3And5(ptr[i]))
+                        count++;
+                }
+            }
+
+            return count;
+        }
     }
 }
