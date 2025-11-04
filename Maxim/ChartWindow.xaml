@@ -1,0 +1,27 @@
+﻿<Window
+    x:Class="CommandProjectPV_425.Views.ChartWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:CommandProjectPV_425.Views"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Графики производительности"
+    Width="1200"
+    Height="800"
+    WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style x:Key="ChartStyle" TargetType="lvc:CartesianChart">
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="LegendPosition" Value="Top" />
+            <Setter Property="LegendFontSize" Value="12" />
+            <Setter Property="LegendBackground" Value="#F0F0F0" />
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        
+    </Grid>
+</Window>

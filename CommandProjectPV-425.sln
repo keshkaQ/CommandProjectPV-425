@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandProjectPV-425", "CommandProjectPV-425\CommandProjectPV-425.csproj", "{8B78D598-00FD-4661-A829-89E7839DA776}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maxim", "Maxim\Maxim.csproj", "{0149E9CB-B05D-40CD-B2E4-52E06EF945F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B78D598-00FD-4661-A829-89E7839DA776}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0149E9CB-B05D-40CD-B2E4-52E06EF945F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0149E9CB-B05D-40CD-B2E4-52E06EF945F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0149E9CB-B05D-40CD-B2E4-52E06EF945F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0149E9CB-B05D-40CD-B2E4-52E06EF945F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
