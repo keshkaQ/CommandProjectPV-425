@@ -94,19 +94,18 @@ namespace CommandProjectPV_425_Test.ViewModels
             UpdateCharts(labels, timeValues, speedupValues);
         }
 
+        // Вспомогательный массив для цветов
+        private readonly SKColor[] Colors =
+        [
+            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+        ];
+
         private void UpdateTimeChart(List<string> labels, List<double> values)
         {
             // Список для хранения всех серий (по одной на каждый столбец)
             var seriesList = new List<ISeries>();
-
-            // Вспомогательная функция для цветов
-            // Этот массив лучше вынести как приватное статическое поле в класс ChartViewModel
-            SKColor[] Colors =
-            [
-                SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-                SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-                SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
-            ];
 
             for (int i = 0; i < values.Count; i++)
             {
@@ -152,12 +151,11 @@ namespace CommandProjectPV_425_Test.ViewModels
             [
                 new Axis
                 {
-                    Labels = labels.ToArray(),
-                    LabelsRotation = 45,
-                    TextSize = 10,
-                    LabelsPaint = new SolidColorPaint(SKColors.Black),
+                    // (Опционально) Установите Labeler, если нужно отображать только числа 1, 2, 3...
+                    // Labeler = value => (value + 1).ToString(),
+
+                    Labels = null,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    ForceStepToMin = true,
                     MinStep = 1,
                     Name = "Методы",
                     NamePaint = new SolidColorPaint(SKColors.Black)
@@ -182,15 +180,6 @@ namespace CommandProjectPV_425_Test.ViewModels
         {
             // Список для хранения всех серий (по одной на каждый столбец)
             var seriesList = new List<ISeries>();
-
-            // Вспомогательная функция для цветов
-            // Этот массив лучше вынести как приватное статическое поле в класс ChartViewModel
-            SKColor[] Colors =
-            [
-                SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-                SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-                SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
-            ];
 
             for (int i = 0; i < values.Count; i++)
             {
@@ -236,12 +225,11 @@ namespace CommandProjectPV_425_Test.ViewModels
             [
                 new Axis
                 {
-                    Labels = labels.ToArray(),
-                    LabelsRotation = 45,
-                    TextSize = 10,
-                    LabelsPaint = new SolidColorPaint(SKColors.Black),
+                    // (Опционально) Установите Labeler, если нужно отображать только числа 1, 2, 3...
+                    // Labeler = value => (value + 1).ToString(),
+
+                    Labels = null,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    ForceStepToMin = true,
                     MinStep = 1,
                     Name = "Методы",
                     NamePaint = new SolidColorPaint(SKColors.Black)

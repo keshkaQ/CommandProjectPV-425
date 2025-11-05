@@ -9,6 +9,7 @@ using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace CommandProjectPV_425.ViewModels
 {
@@ -93,34 +94,53 @@ namespace CommandProjectPV_425.ViewModels
             UpdateCharts(labels, timeValues, speedupValues);
         }
 
+        // Вспомогательный массив для цветов
+        private readonly SKColor[] Colors =
+        [
+            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+        ];
+
         private void UpdateTimeChart(List<string> labels, List<double> values)
         {
-            var points = new List<ObservablePoint>();
+            // Список для хранения всех серий (по одной на каждый столбец)
+            var seriesList = new List<ISeries>();
+
             for (int i = 0; i < values.Count; i++)
             {
-                points.Add(new ObservablePoint(i, values[i]));
+                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
+
+                // 2. Определяем цвет для этого столбца
+                var barColor = Colors[i % Colors.Length];
+
+                // 3. Создаем новую ColumnSeries для этого столбца
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    MaxBarWidth = 30,
+
+                    // Задаем цвет заливки для этой серии
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+
+                    // Настраиваем TooltipLabelFormatter для отображения полной информации
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
             }
 
-            var series = new LineSeries<ObservablePoint>
-            {
-                Values = points,
-                Name = "Время выполнения",
-                Stroke = new SolidColorPaint(SKColors.Blue, 3),
-                Fill = null,
-                GeometryStroke = new SolidColorPaint(SKColors.Blue, 2),
-                GeometryFill = new SolidColorPaint(SKColors.White),
-                GeometrySize = 10,
-                LineSmoothness = 0,
-                TooltipLabelFormatter = point =>
-                {
-                    var index = (int)point.Model.X;
-                    if (index >= 0 && index < labels.Count)
-                        return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
-                    return "N/A";
-                }
-            };
-
-            TimeSeries = [series];
+            // Присваиваем массив серий
+            TimeSeries = seriesList.ToArray();
 
             // Автоматическое определение пределов оси Y
             double minValue = values.Min();
@@ -131,12 +151,10 @@ namespace CommandProjectPV_425.ViewModels
             [
                 new Axis
                 {
-                    Labels = labels.ToArray(),
-                    LabelsRotation = 45,
-                    TextSize = 10,
-                    LabelsPaint = new SolidColorPaint(SKColors.Black),
+                    // Установка Labeler в функцию, возвращающую пустую строку
+                    Labeler = value => string.Empty,
+                    Labels = null,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    ForceStepToMin = true,
                     MinStep = 1,
                     Name = "Методы",
                     NamePaint = new SolidColorPaint(SKColors.Black)
@@ -159,32 +177,43 @@ namespace CommandProjectPV_425.ViewModels
 
         private void UpdateSpeedupChart(List<string> labels, List<double> values)
         {
-            var points = new List<ObservablePoint>();
+            // Список для хранения всех серий (по одной на каждый столбец)
+            var seriesList = new List<ISeries>();
+
             for (int i = 0; i < values.Count; i++)
             {
-                points.Add(new ObservablePoint(i, values[i]));
+                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
+
+                // 2. Определяем цвет для этого столбца
+                var barColor = Colors[i % Colors.Length];
+
+                // 3. Создаем новую ColumnSeries для этого столбца
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    MaxBarWidth = 30,
+
+                    // Задаем цвет заливки для этой серии
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+
+                    // Настраиваем TooltipLabelFormatter для отображения полной информации
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return $"{labels[index]}\n{point.Model.Y}x";
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
             }
 
-            var series = new LineSeries<ObservablePoint>
-            {
-                Values = points,
-                Name = "Ускорение",
-                Stroke = new SolidColorPaint(SKColors.Green, 3),
-                Fill = null,
-                GeometryStroke = new SolidColorPaint(SKColors.Green, 2),
-                GeometryFill = new SolidColorPaint(SKColors.White),
-                GeometrySize = 10,
-                LineSmoothness = 0,
-                TooltipLabelFormatter = point =>
-                {
-                    var index = (int)point.Model.X;
-                    if (index >= 0 && index < labels.Count)
-                        return $"{labels[index]}\n{point.Model.Y:F2}x";
-                    return "N/A";
-                }
-            };
-
-            SpeedupSeries = [series];
+            // Присваиваем массив серий
+            SpeedupSeries = seriesList.ToArray();
 
             // Автоматическое определение пределов оси Y для ускорения
             double minValue = values.Min();
@@ -195,12 +224,10 @@ namespace CommandProjectPV_425.ViewModels
             [
                 new Axis
                 {
-                    Labels = labels.ToArray(),
-                    LabelsRotation = 45,
-                    TextSize = 10,
-                    LabelsPaint = new SolidColorPaint(SKColors.Black),
+                    // Установка Labeler в функцию, возвращающую пустую строку
+                    Labeler = value => string.Empty,
+                    Labels = null,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    ForceStepToMin = true,
                     MinStep = 1,
                     Name = "Методы",
                     NamePaint = new SolidColorPaint(SKColors.Black)

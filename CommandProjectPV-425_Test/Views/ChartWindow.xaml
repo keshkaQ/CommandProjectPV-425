@@ -20,7 +20,8 @@
                 <lvc:CartesianChart
                     x:Name="TimeChart"
                     Margin="20"
-                    LegendPosition="Hidden"
+                    LegendOrientation="Horizontal"
+                    LegendPosition="Bottom"
                     Series="{Binding TimeSeries}"
                     XAxes="{Binding TimeXAxes}"
                     YAxes="{Binding TimeYAxes}" />
@@ -30,7 +31,8 @@
                 <lvc:CartesianChart
                     x:Name="SpeedupChart"
                     Margin="20"
-                    LegendPosition="Hidden"
+                    LegendOrientation="Horizontal"
+                    LegendPosition="Bottom"
                     Series="{Binding SpeedupSeries}"
                     XAxes="{Binding SpeedupXAxes}"
                     YAxes="{Binding SpeedupYAxes}" />
