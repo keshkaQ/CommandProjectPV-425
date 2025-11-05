@@ -21,12 +21,11 @@ namespace CommandProjectPV_425.Services
             foreach (var result in successfulResults)
             {
                 // сокращаем имя метода и задачи
-                var task = result.TaskType.Length > 15 ?
-                    result.TaskType.Substring(0, 15) + "..." 
-                    : result.TaskType;
-                var method = result.MethodName.Length > 10 ?
-                    result.MethodName.Substring(0, 10) + "..." 
-                    : result.MethodName;
+                var task = result.TaskType;
+                //var task = result.TaskType.Length > 15 ?
+                //    result.TaskType.Substring(0, 15) + "..." 
+                //    : result.TaskType;
+                var method = result.MethodName;
                 
                 // конвертируем строковое время и ускорение в миллисекунды
                 labels.Add($"{task}\n{method}");

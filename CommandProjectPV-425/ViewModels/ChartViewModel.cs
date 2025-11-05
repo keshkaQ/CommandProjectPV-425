@@ -9,7 +9,6 @@ using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows.Media;
 
 namespace CommandProjectPV_425.ViewModels
 {
@@ -119,7 +118,7 @@ namespace CommandProjectPV_425.ViewModels
                 var series = new ColumnSeries<ObservablePoint>
                 {
                     Values = singlePoint,
-                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    Name = labels[i].Replace("\n", "-"), // Используем метку как имя серии
                     MaxBarWidth = 30,
 
                     // Задаем цвет заливки для этой серии
@@ -192,7 +191,7 @@ namespace CommandProjectPV_425.ViewModels
                 var series = new ColumnSeries<ObservablePoint>
                 {
                     Values = singlePoint,
-                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    Name = labels[i].Replace("\n", "-"), // Используем метку как имя серии
                     MaxBarWidth = 30,
 
                     // Задаем цвет заливки для этой серии
