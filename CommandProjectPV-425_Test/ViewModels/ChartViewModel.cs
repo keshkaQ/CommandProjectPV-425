@@ -1,4 +1,5 @@
-﻿using CommandProjectPV_425_Test.Interfaces;
+﻿using CommandProjectPV_425_Test.Helpers;
+using CommandProjectPV_425_Test.Interfaces;
 using CommandProjectPV_425_Test.Models;
 using CommandProjectPV_425_Test.Services;
 using LiveChartsCore;
@@ -95,27 +96,52 @@ namespace CommandProjectPV_425_Test.ViewModels
 
         private void UpdateTimeChart(List<string> labels, List<double> values)
         {
-            var points = new List<ObservablePoint>();
+            // Список для хранения всех серий (по одной на каждый столбец)
+            var seriesList = new List<ISeries>();
+
+            // Вспомогательная функция для цветов
+            // Этот массив лучше вынести как приватное статическое поле в класс ChartViewModel
+            SKColor[] Colors =
+            [
+                SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+                SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+                SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+            ];
+
             for (int i = 0; i < values.Count; i++)
             {
-                points.Add(new ObservablePoint(i, values[i]));
-            }
-            var series = new ColumnSeries<ObservablePoint>
-            {
-                Values = points,
-                Name = "Время выполнения",
-                Fill = new SolidColorPaint(SKColors.Blue),
-                Stroke = null,
-                TooltipLabelFormatter = point =>
-                {
-                    var index = (int)point.Model.X;
-                    if (index >= 0 && index < labels.Count)
-                        return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
-                    return "N/A";
-                }
-            };
+                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
 
-            TimeSeries = [series];
+                // 2. Определяем цвет для этого столбца
+                var barColor = Colors[i % Colors.Length];
+
+                // 3. Создаем новую ColumnSeries для этого столбца
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    MaxBarWidth = 30,
+
+                    // Задаем цвет заливки для этой серии
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+
+                    // Настраиваем TooltipLabelFormatter для отображения полной информации
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
+            }
+
+            // Присваиваем массив серий
+            TimeSeries = seriesList.ToArray();
 
             // Автоматическое определение пределов оси Y
             double minValue = values.Min();
@@ -154,27 +180,52 @@ namespace CommandProjectPV_425_Test.ViewModels
 
         private void UpdateSpeedupChart(List<string> labels, List<double> values)
         {
-            var points = new List<ObservablePoint>();
+            // Список для хранения всех серий (по одной на каждый столбец)
+            var seriesList = new List<ISeries>();
+
+            // Вспомогательная функция для цветов
+            // Этот массив лучше вынести как приватное статическое поле в класс ChartViewModel
+            SKColor[] Colors =
+            [
+                SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+                SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+                SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+            ];
+
             for (int i = 0; i < values.Count; i++)
             {
-                points.Add(new ObservablePoint(i, values[i]));
-            }
-            var series = new ColumnSeries<ObservablePoint>
-            {
-                Values = points,
-                Name = "Ускорение",
-                Fill = new SolidColorPaint(SKColors.Green),
-                Stroke = null,
-                TooltipLabelFormatter = point =>
-                {
-                    var index = (int)point.Model.X;
-                    if (index >= 0 && index < labels.Count)
-                        return $"{labels[index]}\n{point.Model.Y:F2}x";
-                    return "N/A";
-                }
-            };
+                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
 
-            SpeedupSeries = [series];
+                // 2. Определяем цвет для этого столбца
+                var barColor = Colors[i % Colors.Length];
+
+                // 3. Создаем новую ColumnSeries для этого столбца
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", " "), // Используем метку как имя серии
+                    MaxBarWidth = 30,
+
+                    // Задаем цвет заливки для этой серии
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+
+                    // Настраиваем TooltipLabelFormatter для отображения полной информации
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
+            }
+
+            // Присваиваем массив серий
+            SpeedupSeries = seriesList.ToArray();
 
             // Автоматическое определение пределов оси Y для ускорения
             double minValue = values.Min();
