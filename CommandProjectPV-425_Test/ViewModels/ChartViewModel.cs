@@ -100,17 +100,12 @@ namespace CommandProjectPV_425_Test.ViewModels
             {
                 points.Add(new ObservablePoint(i, values[i]));
             }
-
-            var series = new LineSeries<ObservablePoint>
+            var series = new ColumnSeries<ObservablePoint>
             {
                 Values = points,
                 Name = "Время выполнения",
-                Stroke = new SolidColorPaint(SKColors.Blue, 3),
-                Fill = null,
-                GeometryStroke = new SolidColorPaint(SKColors.Blue, 2),
-                GeometryFill = new SolidColorPaint(SKColors.White),
-                GeometrySize = 10,
-                LineSmoothness = 0,
+                Fill = new SolidColorPaint(SKColors.Blue),
+                Stroke = null,
                 TooltipLabelFormatter = point =>
                 {
                     var index = (int)point.Model.X;
@@ -164,17 +159,12 @@ namespace CommandProjectPV_425_Test.ViewModels
             {
                 points.Add(new ObservablePoint(i, values[i]));
             }
-
-            var series = new LineSeries<ObservablePoint>
+            var series = new ColumnSeries<ObservablePoint>
             {
                 Values = points,
                 Name = "Ускорение",
-                Stroke = new SolidColorPaint(SKColors.Green, 3),
-                Fill = null,
-                GeometryStroke = new SolidColorPaint(SKColors.Green, 2),
-                GeometryFill = new SolidColorPaint(SKColors.White),
-                GeometrySize = 10,
-                LineSmoothness = 0,
+                Fill = new SolidColorPaint(SKColors.Green),
+                Stroke = null,
                 TooltipLabelFormatter = point =>
                 {
                     var index = (int)point.Model.X;
