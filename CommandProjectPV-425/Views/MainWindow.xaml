@@ -222,7 +222,7 @@
                         x:Name="ExportBtn"
                         Background="#F39C12"
                         Content="📤 Экспорт"
-                        IsEnabled="False"
+                        Click="ExportBtn_Click"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ToJsonBtn"
@@ -273,7 +273,22 @@
                     Style="{StaticResource ModernDataGridStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn
-                            Width="1.2*"
+                            Width="1.5*"
+                            Binding="{Binding Processor}"
+                            Header="Процессор"
+                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                        <DataGridTextColumn
+                            Width="*"
+                            Binding="{Binding CoreCount}"
+                            Header="Ядер"
+                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                        <DataGridTextColumn
+                            Width="*"
+                            Binding="{Binding OperatingSystem}"
+                            Header="ОС"
+                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                        <DataGridTextColumn
+                            Width="*"
                             Binding="{Binding TaskType}"
                             Header="Тип задачи"
                             HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />

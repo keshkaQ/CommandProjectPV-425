@@ -1,7 +1,12 @@
-﻿using BenchmarkDotNet.Reports;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Tests;
+using Microsoft.EntityFrameworkCore;
+using SkiaSharp;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
@@ -29,8 +34,8 @@ namespace CommandProjectPV_425.Views
             RunBenchmarkBtn.IsEnabled = false;
             SaveToDbBtn.IsEnabled = false;
             ShowChartsBtn.IsEnabled = false;
-            ClearResultsBtn.IsEnabled = false;
             ExportBtn.IsEnabled = false;
+            ClearResultsBtn.IsEnabled = false;
             ToJsonBtn.IsEnabled = false;
             ProgressBar.Value = 0;
             StatusText.Text = "Подготовка к тестированию...";
@@ -42,7 +47,6 @@ namespace CommandProjectPV_425.Views
             SaveToDbBtn.IsEnabled = true;
             ShowChartsBtn.IsEnabled = true;
             ClearResultsBtn.IsEnabled = true;
-            ExportBtn.IsEnabled = true;
             RunBenchmarkBtn.IsEnabled = true;
             ToJsonBtn.IsEnabled = true;
         }
@@ -94,54 +98,75 @@ namespace CommandProjectPV_425.Views
         {
             if (!Results.Any())
             {
-                MessageBox.Show("Нет данных для отображения графиков. Сначала запустите тестирование.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Нет данных для отображения графиков.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            if (_chartWindow == null || !_chartWindow.IsLoaded)
-            {
-                _chartWindow = new ChartWindow();
-                _chartWindow.Closed += (s, args) => _chartWindow = null;
-            }
+            var chartWindow = new ChartWindow();
 
-            // Фильтруем только успешные результаты
-            var successfulResults = Results.Where(r => r.ExecutionTime != "Failed").ToList();
+            var successfulResults = Results
+                .Where(r => r.ExecutionTime != "Failed")
+                .OrderBy(r => r.TaskType) // Сортируем по типу задачи
+                .ThenBy(r => r.MethodName) // Затем по методу
+                .ToList();
 
             if (!successfulResults.Any())
             {
-                MessageBox.Show("Нет успешных результатов для отображения графиков.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Нет успешных результатов.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            var methodNames = successfulResults.Select(r => r.MethodName).ToList();
+            var labels = new List<string>();
+            var timeValues = new List<double>();
+            var speedupValues = new List<double>();
 
-            // Парсим время выполнения
-            var timeValues = successfulResults.Select(r =>
+            foreach (var result in successfulResults)
             {
-                var timeStr = r.ExecutionTime;
+                // Сокращаем подписи
+                var taskAbbr = result.TaskType.Length > 15 ?
+                    result.TaskType.Substring(0, 15) + "..." : result.TaskType;
+                var methodAbbr = result.MethodName.Length > 10 ?
+                    result.MethodName.Substring(0, 10) + "..." : result.MethodName;
+
+                labels.Add($"{taskAbbr}\n{methodAbbr}");
+                timeValues.Add(ParseTimeToMs(result.ExecutionTime));
+                speedupValues.Add(ParseSpeedup(result.Speedup));
+            }
+
+            chartWindow.UpdateCharts(labels, timeValues, speedupValues);
+            chartWindow.Show();
+        }
+        private double ParseTimeToMs(string timeStr)
+        {
+            try
+            {
                 if (timeStr.EndsWith(" s"))
-                    return double.Parse(timeStr.Replace(" s", "")) * 1000; // Конвертируем в мс
+                    return double.Parse(timeStr.Replace(" s", "")) * 1000;
                 else if (timeStr.EndsWith(" ms"))
                     return double.Parse(timeStr.Replace(" ms", ""));
                 else if (timeStr.EndsWith(" μs"))
-                    return double.Parse(timeStr.Replace(" μs", "")) / 1000; // Конвертируем в мс
+                    return double.Parse(timeStr.Replace(" μs", "")) / 1000;
+                else if (timeStr.EndsWith(" ns"))
+                    return double.Parse(timeStr.Replace(" ns", "")) / 1_000_000;
                 else
                     return 0.0;
-            }).ToList();
-
-            // Парсим ускорение
-            var speedupValues = successfulResults.Select(r =>
+            }
+            catch
             {
-                var speedupStr = r.Speedup;
-                return double.Parse(speedupStr.Replace("x", ""));
-            }).ToList();
+                return 0.0;
+            }
+        }
 
-            // Пустой список для памяти (больше не используется)
-            var emptyMemoryValues = new List<double>();
-
-            _chartWindow.UpdateCharts(methodNames, timeValues, emptyMemoryValues, speedupValues);
-            _chartWindow.Show();
-            _chartWindow.Focus();
+        private double ParseSpeedup(string speedupStr)
+        {
+            try
+            {
+                return double.Parse(speedupStr.Replace("x", "").Trim());
+            }
+            catch
+            {
+                return 0.0;
+            }
         }
 
         private async void RunBenchmarkBtn_Click(object sender, RoutedEventArgs e)
@@ -164,10 +189,16 @@ namespace CommandProjectPV_425.Views
                 // Устанавливаем размер данных для бенчмарка
                 SetBenchmarkSize(benchmarkType, size);
 
+                // Конфигурация BenchmarkDotNet 
+                var config = ManualConfig
+                    .Create(DefaultConfig.Instance)
+                    .WithOptions(ConfigOptions.DisableOptimizationsValidator)
+                    .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));
+
                 // Запускаем бенчмарк в отдельном потоке чтобы не блокировать UI
                 await Task.Run(() =>
                 {
-                    var summary = BenchmarkRunner.Run(benchmarkType);
+                    var summary = BenchmarkRunner.Run(benchmarkType, config);
                     ProcessBenchmarkSummary(summary, typeTask, size);
                 });
 
@@ -245,6 +276,9 @@ namespace CommandProjectPV_425.Views
 
                 var benchmarkResult = new BenchmarkResult
                 {
+                    Processor = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "Неизвестно",
+                    CoreCount = Environment.ProcessorCount,
+                    OperatingSystem = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
                     TaskType = taskType,
                     DataSize = dataSize,
                     MethodName = methodName,
@@ -313,15 +347,52 @@ namespace CommandProjectPV_425.Views
 
         private void UpdateProgress(double value, string text = null)
         {
-            ProgressBar.Value = value;
-            ProgressText.Text = $"{value:F0}%";
-            if (!string.IsNullOrEmpty(text))
-                StatusText.Text = text;
+            ProgressBar.IsIndeterminate = false;
+            ProgressBar.Value = 100;
+            ProgressText.Text = "100%";
         }
 
-        private void ExportBtn_Click(object sender, RoutedEventArgs e)
+
+        private async void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
-            // Реализация
+            TurnOnButtons();
+            try
+            {
+                using var db = new AppDbContext();
+                StatusText.Text = "Загрузка данных из базы...";
+                ProgressBar.IsIndeterminate = true;
+
+                var resultsFromDb = await db.BenchmarkResults
+                    .OrderByDescending(r => r.Timestamp)
+                    .ToListAsync();
+
+                if (resultsFromDb.Count == 0)
+                {
+                    MessageBox.Show("В базе данных пока нет сохранённых результатов.",
+                                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    StatusText.Text = "База данных пуста.";
+                }
+                else
+                {
+                    Results.Clear();
+                    foreach (var item in resultsFromDb)
+                        Results.Add(item);
+
+                    MessageBox.Show($"Загружено {resultsFromDb.Count} записей из базы данных.",
+                                    "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+                    StatusText.Text = $"Загружено {resultsFromDb.Count} записей из БД.";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при экспорте из базы данных: {ex.Message}",
+                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusText.Text = "Ошибка при экспорте из БД.";
+            }
+            finally
+            {
+                ProgressBar.IsIndeterminate = false;
+            }
         }
 
         private void SaveToJsonClick(object sender, RoutedEventArgs e)
@@ -374,14 +445,21 @@ namespace CommandProjectPV_425.Views
 
         private async Task SaveResultsToDatabase()
         {
-            // реализовать
             try
             {
-                MessageBox.Show("Результаты сохранены в базе данных");
+                using var context = new AppDbContext();
+
+                // Создаем базу данных и таблицы, если их нет
+                await context.Database.EnsureCreatedAsync();
+
+                // Добавляем все результаты
+                await context.BenchmarkResults.AddRangeAsync(Results);
+                await context.SaveChangesAsync();
+
             }
             catch (Exception ex)
             {
-                // Обработка ошибок
+                throw;
             }
         }
     }

@@ -7,36 +7,28 @@
     xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Графики производительности"
-    Width="1000"
-    Height="600"
+    Width="1200"
+    Height="700"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
-    <Window.Resources>
-        <Style x:Key="ChartStyle" TargetType="lvc:CartesianChart">
-            <Setter Property="Margin" Value="10" />
-            <Setter Property="LegendPosition" Value="Top" />
-            <Setter Property="LegendFontSize" Value="12" />
-            <Setter Property="LegendBackground" Value="#F0F0F0" />
-        </Style>
-    </Window.Resources>
-
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <TabControl>
+            <TabItem Header="⏱️ Время выполнения">
+                <lvc:CartesianChart
+                    x:Name="TimeChart"
+                    Margin="20"
+                    LegendPosition="Hidden"/>
+                <!-- Отключаем легенду -->
+            </TabItem>
 
-        <!-- График времени выполнения -->
-        <lvc:CartesianChart
-            x:Name="TimeChart"
-            Grid.Row="0"
-            Style="{StaticResource ChartStyle}" />
-
-        <!-- График ускорения -->
-        <lvc:CartesianChart
-            x:Name="SpeedupChart"
-            Grid.Row="1"
-            Style="{StaticResource ChartStyle}" />
+            <TabItem Header="⚡ Ускорение">
+                <lvc:CartesianChart
+                    x:Name="SpeedupChart"
+                    Margin="20"
+                    LegendPosition="Hidden"/>
+                <!-- Отключаем легенду -->
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
