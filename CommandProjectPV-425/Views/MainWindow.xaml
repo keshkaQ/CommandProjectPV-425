@@ -178,7 +178,9 @@
                         <ProgressBar
                             x:Name="ProgressBar"
                             Height="15"
-                            Maximum="100" />
+                            IsIndeterminate="{Binding IsBusy}"
+                            Maximum="100"
+                            Value="{Binding ProgressValue}" />
                         <TextBlock
                             x:Name="ProgressText"
                             HorizontalAlignment="Center"
@@ -186,7 +188,7 @@
                             FontSize="12"
                             FontWeight="Bold"
                             Foreground="#2C3E50"
-                            Text="0%" />
+                            Text="{Binding ProgressValue, StringFormat='{}{0}%'}" />
                     </Grid>
                 </Border>
 
@@ -196,40 +198,43 @@
                         Background="#27AE60"
                         Click="RunBenchmarkBtn_Click"
                         Content="🚀 Запустить тесты"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ShowChartsBtn"
                         Background="#8E44AD"
                         Click="ShowChartsBtn_Click"
                         Content="📈 Графики"
-                        IsEnabled="False"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="SaveToDbBtn"
                         Background="#2980B9"
                         Click="SaveToDbBtn_Click"
                         Content="💾 Сохранить в БД"
-                        IsEnabled="False"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ClearResultsBtn"
                         Background="#E74C3C"
                         Click="ClearResultsBtn_Click"
                         Content="🗑️ Очистить"
-                        IsEnabled="False"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ExportBtn"
                         Background="#F39C12"
-                        Content="📤 Экспорт"
                         Click="ExportBtn_Click"
+                        Content="📤 Импорт из БД"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ToJsonBtn"
                         Background="Gold"
-                        Click="SaveToJsonClick"
-                        Content=" Сохранить в JSON"
-                        IsEnabled="False"
+                        Click="ToJsonBtn_Click"
+                        Content="📄 Сохранить в JSON"
+                        Foreground="#2C3E50"
+                        IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                 </StackPanel>
             </StackPanel>
@@ -263,13 +268,14 @@
                             x:Name="StatusText"
                             FontWeight="SemiBold"
                             Foreground="#155724"
-                            Text="Готов к тестированию..." />
+                            Text="{Binding StatusText}" />
                     </Border>
                 </StackPanel>
 
                 <DataGrid
                     x:Name="ResultsDataGrid"
                     Grid.Row="1"
+                    ItemsSource="{Binding Results}"
                     Style="{StaticResource ModernDataGridStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn

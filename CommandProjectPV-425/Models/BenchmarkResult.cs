@@ -11,7 +11,6 @@ namespace CommandProjectPV_425.Models
         public required string Processor { get; set; }
         public required int CoreCount { get; set; }
         public required string OperatingSystem { get; set; }
-
         public required string TaskType { get; set; }
         public required int DataSize { get; set; }
         public required string MethodName { get; set; }

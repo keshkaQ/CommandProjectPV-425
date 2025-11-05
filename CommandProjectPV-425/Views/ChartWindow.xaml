@@ -9,7 +9,9 @@
     Title="Графики производительности"
     Width="1200"
     Height="700"
+    ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
     mc:Ignorable="d">
 
     <Grid>
@@ -18,16 +20,20 @@
                 <lvc:CartesianChart
                     x:Name="TimeChart"
                     Margin="20"
-                    LegendPosition="Hidden"/>
-                <!-- Отключаем легенду -->
+                    LegendPosition="Hidden"
+                    Series="{Binding TimeSeries}"
+                    XAxes="{Binding TimeXAxes}"
+                    YAxes="{Binding TimeYAxes}" />
             </TabItem>
 
             <TabItem Header="⚡ Ускорение">
                 <lvc:CartesianChart
                     x:Name="SpeedupChart"
                     Margin="20"
-                    LegendPosition="Hidden"/>
-                <!-- Отключаем легенду -->
+                    LegendPosition="Hidden"
+                    Series="{Binding SpeedupSeries}"
+                    XAxes="{Binding SpeedupXAxes}"
+                    YAxes="{Binding SpeedupYAxes}" />
             </TabItem>
         </TabControl>
     </Grid>

@@ -4,15 +4,17 @@ using System.IO;
 
 namespace CommandProjectPV_425.Models
 {
+    // класс для работы с базой данных
     public class AppDbContext : DbContext
     {
+        // таблица результатов
         public DbSet<BenchmarkResult> BenchmarkResults { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             try
             {
-                // Папка Data будет создана рядом с exe-файлом, в нее и будет сохранятся база!
+                // Папка Data будет создана рядом с exe-файлом, в нее и будет сохранятся база
                 var dbFolder = Path.Combine(AppContext.BaseDirectory, "Data");
                 if (!Directory.Exists(dbFolder))
                 {
