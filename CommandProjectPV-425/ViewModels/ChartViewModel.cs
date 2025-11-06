@@ -6,7 +6,6 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -15,7 +14,14 @@ namespace CommandProjectPV_425.ViewModels
     public class ChartViewModel : INotifyPropertyChanged
     {
         private readonly IChartService _chartService;
-        private ObservableCollection<BenchmarkResult> _results;
+
+        // Вспомогательный массив для цветов
+        private readonly SKColor[] Colors =
+        [
+            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+        ];
 
         public ISeries[] TimeSeries { get; private set; }
         public ISeries[] SpeedupSeries { get; private set; }
@@ -59,13 +65,7 @@ namespace CommandProjectPV_425.ViewModels
             if (labels == null || timeValues == null || speedupValues == null ||
                 labels.Count == 0 || timeValues.Count == 0 || speedupValues.Count == 0)
             {
-                InitializeCharts();
-                OnPropertyChanged(nameof(TimeSeries));
-                OnPropertyChanged(nameof(SpeedupSeries));
-                OnPropertyChanged(nameof(TimeXAxes));
-                OnPropertyChanged(nameof(TimeYAxes));
-                OnPropertyChanged(nameof(SpeedupXAxes));
-                OnPropertyChanged(nameof(SpeedupYAxes));
+                ClearCharts(); ;
                 return;
             }
 
@@ -73,12 +73,7 @@ namespace CommandProjectPV_425.ViewModels
             UpdateSpeedupChart(labels, speedupValues);
 
             // Уведомляем об изменении всех свойств
-            OnPropertyChanged(nameof(TimeSeries));
-            OnPropertyChanged(nameof(SpeedupSeries));
-            OnPropertyChanged(nameof(TimeXAxes));
-            OnPropertyChanged(nameof(TimeYAxes));
-            OnPropertyChanged(nameof(SpeedupXAxes));
-            OnPropertyChanged(nameof(SpeedupYAxes));
+            NotifyAllChartPropertiesChanged();
         }
 
         public void UpdateCharts(IEnumerable<BenchmarkResult> results)
@@ -93,13 +88,46 @@ namespace CommandProjectPV_425.ViewModels
             UpdateCharts(labels, timeValues, speedupValues);
         }
 
-        // Вспомогательный массив для цветов
-        private readonly SKColor[] Colors =
-        [
-            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
-        ];
+        private (Axis[] X, Axis[] Y) CreateAxes(
+            string xName,
+            string yName,
+            List<double> values,
+            Func<double, string> yLabelFormatter)
+        {
+            // Автоматическое определение пределов оси Y
+            double minValue = values.Min();
+            double maxValue = values.Max();
+            double padding = (maxValue - minValue) * 0.1;
+
+            var xAxes = new[]
+            {
+                new Axis
+                {
+                    // Установка Labeler в функцию, возвращающую пустую строку
+                    Labeler = value => string.Empty,
+                    Labels = null,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    MinStep = 1,
+                    Name = "xName",
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
+
+            var yAxes = new[]
+            {
+                new Axis
+                {
+                    Labeler = yLabelFormatter,
+                    MinLimit =Math.Max(0, minValue - padding),
+                    MaxLimit = maxValue + padding,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    Name = "yName",
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
+
+            return (xAxes, yAxes);
+        }
 
         private void UpdateTimeChart(List<string> labels, List<double> values)
         {
@@ -141,37 +169,7 @@ namespace CommandProjectPV_425.ViewModels
             // Присваиваем массив серий
             TimeSeries = seriesList.ToArray();
 
-            // Автоматическое определение пределов оси Y
-            double minValue = values.Min();
-            double maxValue = values.Max();
-            double padding = (maxValue - minValue) * 0.1;
-
-            TimeXAxes =
-            [
-                new Axis
-                {
-                    // Установка Labeler в функцию, возвращающую пустую строку
-                    Labeler = value => string.Empty,
-                    Labels = null,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    MinStep = 1,
-                    Name = "Методы",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-
-            TimeYAxes =
-            [
-                new Axis
-                {
-                    Labeler = value => Helpers.TimeFormatter.FormatTimeShort(value),
-                    MinLimit =Math.Max(0, minValue - padding),
-                    MaxLimit = maxValue + padding,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = "Время выполнения",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
+            (TimeXAxes, TimeYAxes) = CreateAxes("Методы", "Время выполнения", values, Helpers.TimeFormatter.FormatTimeShort);
         }
 
         private void UpdateSpeedupChart(List<string> labels, List<double> values)
@@ -214,41 +212,17 @@ namespace CommandProjectPV_425.ViewModels
             // Присваиваем массив серий
             SpeedupSeries = seriesList.ToArray();
 
-            // Автоматическое определение пределов оси Y для ускорения
-            double minValue = values.Min();
-            double maxValue = values.Max();
-            double padding = (maxValue - minValue) * 0.1;
-
-            SpeedupXAxes =
-            [
-                new Axis
-                {
-                    // Установка Labeler в функцию, возвращающую пустую строку
-                    Labeler = value => string.Empty,
-                    Labels = null,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    MinStep = 1,
-                    Name = "Методы",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-
-            SpeedupYAxes =
-            [
-                new Axis
-                {
-                    MinLimit = Math.Max(0, minValue - padding),
-                    MaxLimit = maxValue + padding,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = "Ускорение (x)",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
+            (SpeedupXAxes, SpeedupYAxes) = CreateAxes("Методы", "Ускорение (x)", values, v => v.ToString("0.##"));
         }
 
         public void ClearCharts()
         {
             InitializeCharts();
+            NotifyAllChartPropertiesChanged();
+        }
+
+        private void NotifyAllChartPropertiesChanged()
+        {
             OnPropertyChanged(nameof(TimeSeries));
             OnPropertyChanged(nameof(SpeedupSeries));
             OnPropertyChanged(nameof(TimeXAxes));
