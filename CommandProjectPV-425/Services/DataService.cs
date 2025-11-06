@@ -85,7 +85,7 @@ public class DataService : IDataService
                 // Берем среднее значение из всех ExecutionTime, конвертируя их из строки в double (мс)
                 var validResults = g.Where(r => r.ExecutionTime != "Failed");
 
-                // ⚠️ ВАЖНО: ParseTimeToMs должен возвращать double (мс)
+                // ВАЖНО: ParseTimeToMs должен возвращать double (мс)
                 var averageTime = validResults.Any()
                     ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
                     : 0.0;
@@ -93,7 +93,8 @@ public class DataService : IDataService
                 return new MethodStatistic
                 {
                     MethodName = g.Key,
-                    AverageTimeMs = averageTime
+                    AverageTimeMs = averageTime,
+                    AverageSpeedup = 0.0
                 };
             })
             .Where(s => s.AverageTimeMs > 0) // Удаляем методы, у которых нет успешных результатов
@@ -108,4 +109,5 @@ public class MethodStatistic
 {
     public string MethodName { get; set; }
     public double AverageTimeMs { get; set; }
+    public double AverageSpeedup { get; set; }
 }
