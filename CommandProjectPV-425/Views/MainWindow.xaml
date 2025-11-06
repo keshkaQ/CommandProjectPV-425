@@ -7,7 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Измерение производительности задач с помощью BenchmarkDotNet"
     Width="1400"
-    Height="650"
+    Height="700"
+    Icon="/Images/Иконка.ico"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -100,6 +101,22 @@
             <Setter Property="CornerRadius" Value="6" />
         </Style>
 
+        <Style x:Key="ErrorBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="15,12" />
+            <Setter Property="Background" Value="#F8D7DA" />
+            <Setter Property="BorderBrush" Value="#F5C6CB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style x:Key="StatusBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="15,12" />
+            <Setter Property="Background" Value="#D5EDDA" />
+            <Setter Property="BorderBrush" Value="#C3E6CB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
     </Window.Resources>
 
     <Grid Margin="15" Background="#F5F7F9">
@@ -107,25 +124,53 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+
         </Grid.RowDefinitions>
 
         <Border
             Grid.Row="0"
             Margin="0,0,0,15"
-            Padding="20,12"
-            Background="#2C3E50"
-            Style="{StaticResource BorderStyle}">
-            <TextBlock
-                HorizontalAlignment="Center"
-                FontSize="16"
-                FontWeight="Bold"
-                Foreground="White"
-                Text="📊 Измерение производительности задач c помощью BenchmarkDotNet" />
+            Padding="15,10"
+            Background="White"
+            BorderBrush="#BDC3C7"
+            BorderThickness="0,0,0,1"
+            CornerRadius="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Image
+                    Grid.Column="0"
+                    Width="150"
+                    Height="60"
+                    Source="/Images/result_logo_v2.png" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Foreground="#2C3E50"
+                    Text="📊 Измерение производительности задач c помощью BenchmarkDotNet" />
+
+                <Image
+                    Grid.Column="2"
+                    Width="150"
+                    Height="50"
+                    VerticalAlignment="Center"
+                    Source="/Images/result_logo_top_v2.jpeg" />
+            </Grid>
         </Border>
 
         <Border
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="0,0,0,10"
             Style="{StaticResource BorderStyle}">
             <StackPanel>
@@ -163,8 +208,9 @@
             </StackPanel>
         </Border>
 
+
         <Border
-            Grid.Row="2"
+            Grid.Row="3"
             Margin="0,0,0,10"
             Style="{StaticResource BorderStyle}">
             <StackPanel Orientation="Horizontal">
@@ -240,92 +286,103 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="3" Style="{StaticResource BorderStyle}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
 
-                <StackPanel
-                    Grid.Row="0"
-                    Margin="0,0,0,10"
-                    Orientation="Horizontal">
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Foreground="#2C3E50"
-                        Text="Результаты тестирования" />
+        <Border
+            Grid.Row="4"
+            Margin="0,0,0,10"
+            Style="{StaticResource ErrorBorderStyle}"
+            Visibility="{Binding ErrorVisibility}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Foreground="#721C24"
+                    Text="❌ Ошибка:" />
+                <TextBlock
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Foreground="#721C24"
+                    Text="{Binding ErrorText}" />
+            </StackPanel>
+        </Border>
+        
+        <Border Grid.Row="5" Style="{StaticResource BorderStyle}">
+            <DataGrid
+                x:Name="ResultsDataGrid"
+                ItemsSource="{Binding Results}"
+                Style="{StaticResource ModernDataGridStyle}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn
+                        Width="1.2*"
+                        Binding="{Binding Processor}"
+                        Header="Процессор"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="0.5*"
+                        Binding="{Binding CoreCount}"
+                        Header="Ядер"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="*"
+                        Binding="{Binding OperatingSystem}"
+                        Header="ОС"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="*"
+                        Binding="{Binding TaskType}"
+                        Header="Тип задачи"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="0.8*"
+                        Binding="{Binding DataSize, StringFormat='N0'}"
+                        Header="Размер"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="1.1*"
+                        Binding="{Binding MethodName}"
+                        Header="Метод"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="0.9*"
+                        Binding="{Binding ExecutionTime}"
+                        Header="⏱️ Время"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="0.8*"
+                        Binding="{Binding Speedup}"
+                        Header="⚡ Ускорение"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                    <DataGridTextColumn
+                        Width="1.2*"
+                        Binding="{Binding Timestamp, StringFormat='dd.MM.yy HH:mm'}"
+                        Header="🕒 Время теста"
+                        HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-                    <Border
-                        Margin="15,0,0,0"
-                        Padding="10,6"
-                        Background="#D5EDDA"
-                        BorderBrush="#C3E6CB"
-                        Style="{StaticResource BorderStyle}">
-                        <TextBlock
-                            x:Name="StatusText"
-                            FontWeight="SemiBold"
-                            Foreground="#155724"
-                            Text="{Binding StatusText}" />
-                    </Border>
-                </StackPanel>
-
-                <DataGrid
-                    x:Name="ResultsDataGrid"
-                    Grid.Row="1"
-                    ItemsSource="{Binding Results}"
-                    Style="{StaticResource ModernDataGridStyle}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn
-                            Width="1.5*"
-                            Binding="{Binding Processor}"
-                            Header="Процессор"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="*"
-                            Binding="{Binding CoreCount}"
-                            Header="Ядер"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="*"
-                            Binding="{Binding OperatingSystem}"
-                            Header="ОС"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="*"
-                            Binding="{Binding TaskType}"
-                            Header="Тип задачи"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="0.8*"
-                            Binding="{Binding DataSize, StringFormat='N0'}"
-                            Header="Размер"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="1.1*"
-                            Binding="{Binding MethodName}"
-                            Header="Метод"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="0.9*"
-                            Binding="{Binding ExecutionTime}"
-                            Header="⏱️ Время"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="0.8*"
-                            Binding="{Binding Speedup}"
-                            Header="⚡ Ускорение"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="1.2*"
-                            Binding="{Binding Timestamp, StringFormat='dd.MM.yy HH:mm'}"
-                            Header="🕒 Время теста"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
+        <Border
+            Grid.Row="6"
+            Margin="0,10,0,0"
+            Style="{StaticResource StatusBorderStyle}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Foreground="#155724"
+                    Text="📊 Статус:" />
+                <TextBlock
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Foreground="#155724"
+                    Text="{Binding StatusText}" />
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

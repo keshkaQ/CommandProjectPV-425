@@ -1,5 +1,6 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
+using CommandProjectPV_425.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -9,13 +10,28 @@ namespace CommandProjectPV_425.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly IBenchmarkService _benchmarkService;  // запуск тестов производительности
-        private readonly IDataService _dataService;            // работа с данными (БД, JSON)
-        private readonly IChartService _chartService;          // подготовка данных для графиков
+        private readonly IBenchmarkService _benchmarkService;
+        private readonly IDataService _dataService;
+        private readonly IChartService _chartService;
 
-        public ObservableCollection<BenchmarkResult> Results { get; set; } // Коллекция результатов для datagrid
+        public ObservableCollection<BenchmarkResult> Results { get; set; }
 
-        // строка статуса в нижней части окна
+        // Блок ошибок
+        private Visibility _errorVisibility = Visibility.Collapsed;
+        public Visibility ErrorVisibility
+        {
+            get => _errorVisibility;
+            set { _errorVisibility = value; OnPropertyChanged(); }
+        }
+
+        private string _errorText;
+        public string ErrorText
+        {
+            get => _errorText;
+            set { _errorText = value; OnPropertyChanged(); }
+        }
+
+        // Блок статуса
         private string _statusText;
         public string StatusText
         {
@@ -23,7 +39,6 @@ namespace CommandProjectPV_425.ViewModels
             set { _statusText = value; OnPropertyChanged(); }
         }
 
-        // значение прогресс-бара 
         private double _progressValue;
         public double ProgressValue
         {
@@ -31,7 +46,6 @@ namespace CommandProjectPV_425.ViewModels
             set { _progressValue = value; OnPropertyChanged(); }
         }
 
-        // флаг для блокировки кнопок
         private bool _isBusy;
         public bool IsBusy
         {
@@ -40,7 +54,7 @@ namespace CommandProjectPV_425.ViewModels
             {
                 _isBusy = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsNotBusy)); 
+                OnPropertyChanged(nameof(IsNotBusy));
             }
         }
 
@@ -56,6 +70,27 @@ namespace CommandProjectPV_425.ViewModels
             IsBusy = false;
         }
 
+        // Универсальный метод для отображения ошибок
+        private void ShowError(string errorMessage)
+        {
+            ErrorText = errorMessage;
+            ErrorVisibility = Visibility.Visible;
+        }
+
+        // Метод для скрытия ошибок
+        private void HideError()
+        {
+            ErrorVisibility = Visibility.Collapsed;
+            ErrorText = string.Empty;
+        }
+
+        // Метод для отображения успешного статуса
+        private void ShowSuccess(string message)
+        {
+            StatusText = message;
+            HideError();
+        }
+
         public async Task RunBenchmarkAsync(string taskType, int size)
         {
             if (IsBusy) return;
@@ -63,6 +98,7 @@ namespace CommandProjectPV_425.ViewModels
             try
             {
                 IsBusy = true;
+                HideError();
                 StatusText = "Запуск тестов. Немного подождите...";
                 ProgressValue = 0;
 
@@ -75,13 +111,12 @@ namespace CommandProjectPV_425.ViewModels
                         Results.Add(result);
                 });
 
-                StatusText = $"Тестирование завершено! Протестировано {results.Count} методов.";
+                ShowSuccess($"Тестирование завершено! Протестировано {results.Count} методов.");
                 ProgressValue = 100;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                StatusText = "Ошибка при выполнении тестов";
+                ShowError($"Ошибка при выполнении тестов: {ex.Message}");
             }
             finally
             {
@@ -93,23 +128,22 @@ namespace CommandProjectPV_425.ViewModels
         {
             if (IsBusy || !Results.Any())
             {
-                MessageBox.Show("Нет результатов для сохранения","Информация",MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowError("Нет результатов для сохранения");
                 return;
             }
 
             try
             {
                 IsBusy = true;
+                HideError();
                 StatusText = "Сохранение результатов в базу данных...";
-                await Task.Delay(200);
+
                 await _dataService.SaveResultsToDatabaseAsync(Results);
-                StatusText = "Результаты успешно сохранены в базу данных!";
-                MessageBox.Show("Результаты успешно сохранены в базу данных!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowSuccess("Результаты успешно сохранены в базу данных!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении в БД: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                StatusText = "Ошибка при сохранении в БД";
+                ShowError($"Ошибка при сохранении в БД: {ex.Message}");
             }
             finally
             {
@@ -124,6 +158,7 @@ namespace CommandProjectPV_425.ViewModels
             try
             {
                 IsBusy = true;
+                HideError();
                 StatusText = "Загрузка данных из базы...";
 
                 var results = await _dataService.LoadResultsFromDatabaseAsync();
@@ -136,56 +171,67 @@ namespace CommandProjectPV_425.ViewModels
                 });
 
                 if (results.Any())
-                {
-                    StatusText = $"Загружено {results.Count} записей из БД.";
-                    MessageBox.Show($"Загружено {results.Count} записей из базы данных.", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    ShowSuccess($"Загружено {results.Count} записей из БД.");
                 else
-                {
-                    StatusText = "База данных пуста.";
-                    MessageBox.Show("В базе данных пока нет сохранённых результатов.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    ShowSuccess("База данных пуста.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при экспорте из базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                StatusText = "Ошибка при экспорте из БД.";
+                ShowError($"Ошибка при загрузке данных из базы: {ex.Message}");
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        public async Task OpenCharts()
+        {
+            if (!Results.Any())
+            {
+                ShowError("Нет данных для отображения графиков");
+                return;
+            }
+
+            var chartWindow = new ChartWindow();
+            chartWindow.UpdateCharts(Results);
+            chartWindow.Show();
         }
 
         public async Task SaveToJsonAsync()
         {
             if (IsBusy || !Results.Any())
             {
-                MessageBox.Show("Нет результатов для сохранения в JSON", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowError("Нет результатов для сохранения в JSON");
                 return;
             }
 
             try
             {
                 IsBusy = true;
+                HideError();
+                StatusText = "Сохранение в JSON...";
+
                 await _dataService.SaveResultsToJsonAsync(Results);
-                MessageBox.Show("Результаты сохранены в JSON файл", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowSuccess("Результаты сохранены в JSON файл");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении результатов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Ошибка при сохранении в JSON: {ex.Message}");
             }
             finally
             {
                 IsBusy = false;
             }
         }
+
         public void ClearResults()
         {
             if (IsBusy) return;
 
             Results.Clear();
             ProgressValue = 0;
+            HideError();
             StatusText = "Готов к тестированию...";
         }
 

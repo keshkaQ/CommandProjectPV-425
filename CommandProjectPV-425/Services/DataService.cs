@@ -29,7 +29,7 @@ namespace CommandProjectPV_425.Services
             using var context = new AppDbContext();
 
             // загружаем все результаты из БД, предварительно отсортированные
-            return await context.BenchmarkResults.OrderByDescending(r => r.Timestamp).ToListAsync();
+            return await context.BenchmarkResults.OrderByDescending(r => r.Speedup).ToListAsync();
         }
 
         public async Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results)

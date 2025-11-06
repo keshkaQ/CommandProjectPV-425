@@ -30,21 +30,9 @@ namespace CommandProjectPV_425.Views
         private async void SaveToDbBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.SaveToDatabaseAsync();
         private async void ExportBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.LoadFromDatabaseAsync();
         private async void ToJsonBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.SaveToJsonAsync();
+        private async void ShowChartsBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.OpenCharts();
         private void ClearResultsBtn_Click(object sender, RoutedEventArgs e) => _viewModel.ClearResults();
-
-        private void ShowChartsBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (!_viewModel.Results.Any())
-            {
-                MessageBox.Show("Нет данных для отображения графиков.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var chartWindow = new ChartWindow();
-            chartWindow.UpdateCharts(_viewModel.Results);
-            chartWindow.Show();
-        }
-
+       
         // метод для получение размера и типа задачи из combobox
         private (string typeTask, int size) GetTypeAndSizeTask()
         {

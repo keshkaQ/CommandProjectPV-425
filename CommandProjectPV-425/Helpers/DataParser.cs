@@ -1,4 +1,6 @@
-﻿namespace CommandProjectPV_425.Helpers
+﻿using System.Globalization;
+
+namespace CommandProjectPV_425.Helpers
 {
     public static class DataParser
     {
@@ -27,12 +29,20 @@
             }
         }
 
-        // извлекаем числовое значение ускорения
         public static double ParseSpeedup(string speedupStr)
         {
             try
             {
-                return double.Parse(speedupStr.Replace("x", "").Trim());
+                // Убираем проценты и пробелы, заменяем запятую на точку
+                var cleanStr = speedupStr.Replace("%", "").Replace(" ", "").Replace(",", ".");
+
+                // Парсим как double
+                if (double.TryParse(cleanStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentage))
+                {
+                    return percentage;
+                }
+
+                return 0.0;
             }
             catch
             {

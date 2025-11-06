@@ -14,17 +14,16 @@ namespace CommandProjectPV_425.Models
         {
             try
             {
-                // Папка Data будет создана рядом с exe-файлом, в нее и будет сохранятся база
-                var dbFolder = Path.Combine(AppContext.BaseDirectory, "Data");
-                if (!Directory.Exists(dbFolder))
+                // Текущая директория проекта (рабочая директория)
+                var projectFolder = Environment.CurrentDirectory;
+                var databaseFolder = Path.Combine(projectFolder, "DataBase");
+
+                if (!Directory.Exists(databaseFolder))
                 {
-                    Directory.CreateDirectory(dbFolder);
-                    Debug.WriteLine($"Создана папка для базы данных: {dbFolder}");
+                    Directory.CreateDirectory(databaseFolder);
                 }
 
-                var dbPath = Path.Combine(dbFolder, "benchmark.db");
-                Debug.WriteLine($"Путь к базе данных: {dbPath}");
-
+                var dbPath = Path.Combine(databaseFolder, "benchmark.db");
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
             }
             catch (Exception ex)

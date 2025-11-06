@@ -5,6 +5,7 @@ using BenchmarkDotNet.Running;
 using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Tests;
+using System.Globalization;
 
 namespace CommandProjectPV_425.Services
 {
@@ -67,26 +68,32 @@ namespace CommandProjectPV_425.Services
         private List<BenchmarkResult> ProcessBenchmarkSummary(Summary summary, string taskType, int dataSize)
         {
             var results = new List<BenchmarkResult>();
-            // находим базовый метод [Benchmark(Baseline = true] для расчета ускорения
+
+            // Находим базовый метод [Benchmark(Baseline = true)] для расчета ускорения
             var baselineReport = summary.Reports.FirstOrDefault(r => r.BenchmarkCase.Descriptor.Baseline);
             double baselineTimeNs = baselineReport?.ResultStatistics?.Mean ?? 0;
 
-            // обрабатываем каждый метод-бенчмарк
+            // Обрабатываем каждый метод-бенчмарк
             foreach (var report in summary.Reports)
             {
                 var benchmarkCase = report.BenchmarkCase;
 
-                // меняем имя для отображения в DataGrid
+                // Меняем имя для отображения в DataGrid
                 var methodName = FormatMethodName(benchmarkCase.Descriptor.WorkloadMethod.Name);
 
-                // получаем среднее время выполнения в наносекундах
+                // Получаем среднее время выполнения в наносекундах
                 var meanTimeNs = report.ResultStatistics?.Mean ?? 0;
 
-                // рассчитываем ускорение относительно базового метода
-                var speedup = baselineTimeNs > 0 ? baselineTimeNs / meanTimeNs : 0;
+                // Рассчитываем ускорение относительно базового метода
+                double speedup = 1.0;
+                if (baselineTimeNs > 0 && meanTimeNs > 0)
+                {
+                    speedup = baselineTimeNs / meanTimeNs;
+                }
+
                 var speedupFormatted = FormatSpeedup(speedup);
 
-                // создаем объект результата со всей информацией
+                // Создаем объект результата со всей информацией
                 results.Add(new BenchmarkResult
                 {
                     Processor = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "Неизвестно",
@@ -102,7 +109,13 @@ namespace CommandProjectPV_425.Services
                 });
             }
 
-            return results;
+            return results.OrderBy(r =>
+            {
+                var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                    return timeMs;
+                return double.MaxValue;
+            }).ToList();
         }
         // форматируем имена методов в названия для DataGrid
         public string FormatMethodName(string methodName)
@@ -124,12 +137,18 @@ namespace CommandProjectPV_425.Services
         // форматируем числовое значение ускорения в строку с нужной точностью
         private string FormatSpeedup(double speedup)
         {
-            return speedup switch
+            double percentage = (speedup - 1.0) * 100;
+
+            return percentage switch
             {
-                < 0.01 => speedup.ToString("F3") + "x",
-                < 0.1 => speedup.ToString("F3") + "x",
-                < 1 => speedup.ToString("F2") + "x",
-                _ => speedup.ToString("F2") + "x"
+                > 100 => $"{percentage:F0}%",    
+                > 50 => $"{percentage:F0}%",     
+                > 10 => $"{percentage:F1}%",     
+                > 0 => $"{percentage:F1}%",      
+                0 => "0%",                        
+                > -10 => $"{percentage:F1}%",      
+                > -50 => $"{percentage:F1}%",      
+                _ => $"{percentage:F0}%"         
             };
         }
     }
