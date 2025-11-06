@@ -4,7 +4,6 @@ using CommandProjectPV_425.Services;
 using CommandProjectPV_425.ViewModels.Base;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using SkiaSharp;
 using System.Windows;
 
 namespace CommandProjectPV_425.ViewModels;
@@ -13,14 +12,6 @@ public class ChartViewModel : BaseViewModel
 {
     private readonly IChartService _chartService;
     private readonly IDataService _dataService;
-
-    // Вспомогательный массив для цветов
-    private readonly SKColor[] Colors =
-    [
-        SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-        SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-        SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
-    ];
 
     public ISeries[] TimeSeries { get; private set; }
     public ISeries[] SpeedupSeries { get; private set; }

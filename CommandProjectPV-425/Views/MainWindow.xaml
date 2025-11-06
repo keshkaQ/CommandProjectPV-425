@@ -236,6 +236,13 @@
                         Foreground="#2C3E50"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
+                    <Button
+                        x:Name="ShowAnalyticsBtn"
+                        Background="Aquamarine"
+                        Click="ShowAnalyticsBtn_Click"
+                        Content="📄 Аналитика"
+                        Foreground="#2C3E50"
+                        Style="{StaticResource ActionButtonStyle}" />
                 </StackPanel>
             </StackPanel>
         </Border>

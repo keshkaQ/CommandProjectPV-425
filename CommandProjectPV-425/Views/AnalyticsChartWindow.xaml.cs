@@ -1,27 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CommandProjectPV_425.ViewModels;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
-namespace CommandProjectPV_425.Views
+namespace CommandProjectPV_425.Views;
+
+public partial class AnalyticsChartWindow : Window
 {
-    /// <summary>
-    /// Логика взаимодействия для AnalyticsChartWindow.xaml
-    /// </summary>
-    public partial class AnalyticsChartWindow : Window
+    private readonly AnalyticsChartViewModel _viewModel;
+    public AnalyticsChartWindow()
     {
-        public AnalyticsChartWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+
+        _viewModel = new AnalyticsChartViewModel();
+        DataContext = _viewModel;
+    }
+
+    public async Task UpdateChartsAsync()
+    {
+        await _viewModel.UpdateChartAsync();
     }
 }

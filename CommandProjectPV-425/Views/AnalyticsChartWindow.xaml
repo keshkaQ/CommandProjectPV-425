@@ -5,7 +5,7 @@
     xmlns:local="clr-namespace:CommandProjectPV_425.Views"
     xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Графики производительности"
+    Title="📊 Общая аналитика"
     Width="1200"
     Height="700"
     ResizeMode="NoResize"
@@ -31,8 +31,8 @@
                     Margin="20"
                     LegendOrientation="Horizontal"
                     LegendPosition="Bottom"
-                    Series="{Binding MethodStatsSeries}"
-                    XAxes="{Binding MethodStatsXAxes}"
-                    YAxes="{Binding MethodStatsYAxes}" />
+                    Series="{Binding TimeStatysticsSeries}"
+                    XAxes="{Binding TimeStatysticsXAxes}"
+                    YAxes="{Binding TimeStatysticsYAxes}" />
     </Grid>
 </Window>

@@ -61,5 +61,13 @@ namespace CommandProjectPV_425.Views
                 return (string.Empty, default);
             }
         }
+
+        private async void ShowAnalyticsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var analyticsWindow = new AnalyticsChartWindow();
+
+            await analyticsWindow.UpdateChartsAsync();
+            analyticsWindow.Show();
+        }
     }
 }
