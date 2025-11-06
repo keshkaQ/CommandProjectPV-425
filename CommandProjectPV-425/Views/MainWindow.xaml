@@ -188,6 +188,7 @@
                         Width="250"
                         Margin="10,0,30,0"
                         Style="{StaticResource ComboBoxStyle}">
+                        <ComboBoxItem Content="All Tasks" />
                         <ComboBoxItem Content="Count Numbers Above Average" />
                         <ComboBoxItem Content="Divisible Three or Five" />
                         <ComboBoxItem Content="Find Prime Numbers" />
