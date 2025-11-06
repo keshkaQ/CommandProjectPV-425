@@ -3,6 +3,9 @@ using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Kernel;
+using LiveChartsCore.Kernel.Sketches;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
@@ -24,6 +27,7 @@ namespace CommandProjectPV_425.ViewModels
             SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
             SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
         ];
+
         public ISeries[] TimeSeries { get; private set; }
         public ISeries[] SpeedupSeries { get; private set; }
         public ISeries[] MethodStatsSeries { get; private set; }
@@ -59,12 +63,14 @@ namespace CommandProjectPV_425.ViewModels
             // Инициализация пустых графиков
             TimeSeries = Array.Empty<ISeries>();
             SpeedupSeries = Array.Empty<ISeries>();
+
             MethodStatsSeries = Array.Empty<ISeries>();
 
             TimeXAxes = Array.Empty<Axis>();
             TimeYAxes = Array.Empty<Axis>();
             SpeedupXAxes = Array.Empty<Axis>();
             SpeedupYAxes = Array.Empty<Axis>();
+
             MethodStatsXAxes = Array.Empty<Axis>();
             MethodStatsYAxes = Array.Empty<Axis>();
         }
@@ -159,6 +165,44 @@ namespace CommandProjectPV_425.ViewModels
             }
         }
 
+        private (ISeries[] Series, Axis[] XAxes, Axis[] YAxes) CreateColumnChart(
+            List<string> labels,
+            List<double> values,
+            string xAxisName,
+            string yAxisName,
+            Func<double, string> yLabelFormatter,
+            Func<int, double, string> tooltipFormatter)
+        {
+            var seriesList = new List<ISeries>();
+
+            for (int i = 0; i < values.Count; i++)
+            {
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
+                var barColor = Colors[i % Colors.Length];
+
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", "-"),
+                    MaxBarWidth = 30,
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return tooltipFormatter(index, (double)point.Model.Y);
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
+            }
+
+            var (xAxes, yAxes) = CreateAxes(xAxisName, yAxisName, values, yLabelFormatter);
+            return (seriesList.ToArray(), xAxes, yAxes);
+        }
+
         public void UpdateMethodsStatsChart(List<MethodStatistic> stats)
         {
             if (stats == null || stats.Count == 0)
@@ -174,126 +218,40 @@ namespace CommandProjectPV_425.ViewModels
             var values = stats.Select(s => s.AverageTimeMs).ToList();
             var labels = stats.Select(s => s.MethodName).ToList();
 
-            for (int i = 0; i < stats.Count; i++)
-            {
-                // Создаем отдельную серию для каждого столбца (как в ваших других методах)
-                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-                var barColor = Colors[i % Colors.Length];
-
-                var series = new ColumnSeries<ObservablePoint>
-                {
-                    Values = singlePoint,
-                    Name = labels[i],
-                    MaxBarWidth = 30,
-                    Fill = new SolidColorPaint(barColor),
-                    Stroke = null,
-                    TooltipLabelFormatter = point =>
-                    {
-                        var index = (int)point.Model.X;
-                        if (index >= 0 && index < labels.Count)
-                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
-                        return "N/A";
-                    }
-                };
-                seriesList.Add(series);
-            }
-
-            MethodStatsSeries = seriesList.ToArray();
-
-            // Используем существующий метод CreateAxes, но с пользовательскими метками на оси X
-            (MethodStatsXAxes, MethodStatsYAxes) = CreateAxes(
+            (MethodStatsSeries, MethodStatsXAxes, MethodStatsYAxes) = CreateColumnChart(
+                labels,
+                values,
                 "Методы",
                 "Среднее время выполнения",
-                values,
-                Helpers.TimeFormatter.FormatTimeShort);
+                Helpers.TimeFormatter.FormatTimeShort,
+                (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}"
+            );
 
             NotifyAllChartPropertiesChanged();
         }
 
         private void UpdateTimeChart(List<string> labels, List<double> values)
         {
-            // Список для хранения всех серий (по одной на каждый столбец)
-            var seriesList = new List<ISeries>();
-
-            for (int i = 0; i < values.Count; i++)
-            {
-                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
-                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-
-                // 2. Определяем цвет для этого столбца
-                var barColor = Colors[i % Colors.Length];
-
-                // 3. Создаем новую ColumnSeries для этого столбца
-                var series = new ColumnSeries<ObservablePoint>
-                {
-                    Values = singlePoint,
-                    Name = labels[i].Replace("\n", "-"), // Используем метку как имя серии
-                    MaxBarWidth = 30,
-
-                    // Задаем цвет заливки для этой серии
-                    Fill = new SolidColorPaint(barColor),
-                    Stroke = null,
-
-                    // Настраиваем TooltipLabelFormatter для отображения полной информации
-                    TooltipLabelFormatter = point =>
-                    {
-                        var index = (int)point.Model.X;
-                        if (index >= 0 && index < labels.Count)
-                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
-                        return "N/A";
-                    }
-                };
-
-                seriesList.Add(series);
-            }
-
-            // Присваиваем массив серий
-            TimeSeries = seriesList.ToArray();
-
-            (TimeXAxes, TimeYAxes) = CreateAxes("Методы", "Время выполнения", values, Helpers.TimeFormatter.FormatTimeShort);
+            (TimeSeries, TimeXAxes, TimeYAxes) = CreateColumnChart(
+                labels,
+                values,
+                "Методы",
+                "Время выполнения",
+                Helpers.TimeFormatter.FormatTimeShort,
+                (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}"
+            );
         }
 
         private void UpdateSpeedupChart(List<string> labels, List<double> values)
         {
-            // Список для хранения всех серий (по одной на каждый столбец)
-            var seriesList = new List<ISeries>();
-
-            for (int i = 0; i < values.Count; i++)
-            {
-                // 1. Создаем список точек, содержащий только одну точку (для одного столбца)
-                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-
-                // 2. Определяем цвет для этого столбца
-                var barColor = Colors[i % Colors.Length];
-
-                // 3. Создаем новую ColumnSeries для этого столбца
-                var series = new ColumnSeries<ObservablePoint>
-                {
-                    Values = singlePoint,
-                    Name = labels[i].Replace("\n", "-"), // Используем метку как имя серии
-                    MaxBarWidth = 30,
-
-                    // Задаем цвет заливки для этой серии
-                    Fill = new SolidColorPaint(barColor),
-                    Stroke = null,
-
-                    // Настраиваем TooltipLabelFormatter для отображения полной информации
-                    TooltipLabelFormatter = point =>
-                    {
-                        var index = (int)point.Model.X;
-                        if (index >= 0 && index < labels.Count)
-                            return $"{labels[index]}\n{point.Model.Y}x";
-                        return "N/A";
-                    }
-                };
-
-                seriesList.Add(series);
-            }
-
-            // Присваиваем массив серий
-            SpeedupSeries = seriesList.ToArray();
-
-            (SpeedupXAxes, SpeedupYAxes) = CreateAxes("Методы", "Ускорение (x)", values, v => v.ToString("0.##"));
+            (SpeedupSeries, SpeedupXAxes, SpeedupYAxes) = CreateColumnChart(
+                labels,
+                values,
+                "Методы",
+                "Ускорение (x)",
+                v => v.ToString("0.##"),
+                (index, val) => $"{labels[index]}\n{val:0.##}x"
+            );
         }
 
         public void ClearCharts()
@@ -310,6 +268,7 @@ namespace CommandProjectPV_425.ViewModels
             OnPropertyChanged(nameof(TimeYAxes));
             OnPropertyChanged(nameof(SpeedupXAxes));
             OnPropertyChanged(nameof(SpeedupYAxes));
+
             OnPropertyChanged(nameof(MethodStatsSeries));
             OnPropertyChanged(nameof(MethodStatsXAxes));
             OnPropertyChanged(nameof(MethodStatsYAxes));
