@@ -1,5 +1,6 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
+using CommandProjectPV_425.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -7,7 +8,7 @@ using System.Windows;
 
 namespace CommandProjectPV_425.ViewModels
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : BaseViewModel
     {
         private readonly IBenchmarkService _benchmarkService;  // запуск тестов производительности
         private readonly IDataService _dataService;            // работа с данными (БД, JSON)
@@ -187,12 +188,6 @@ namespace CommandProjectPV_425.ViewModels
             Results.Clear();
             ProgressValue = 0;
             StatusText = "Готов к тестированию...";
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -1,11 +1,24 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
+using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 
 namespace CommandProjectPV_425.Services
 {
     public class ChartService : IChartService
     {
         private const int MAX_COLUMN_CHARTS = 9;
+
+        // Вспомогательный массив для цветов
+        private readonly SKColor[] Colors =
+        [
+            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
+        SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+        SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+        ];
 
         public (List<string> labels, List<double> timeValues, List<double> speedupValues) PrepareChartData(IEnumerable<BenchmarkResult> results)
         {
@@ -68,6 +81,85 @@ namespace CommandProjectPV_425.Services
             }
 
             return (labels, timeValues, speedupValues);
+        }
+
+        public (ISeries[] Series, Axis[] XAxes, Axis[] YAxes) CreateColumnChart(
+            List<string> labels,
+            List<double> values,
+            string xAxisName,
+            string yAxisName,
+            Func<double, string> yLabelFormatter,
+            Func<int, double, string> tooltipFormatter)
+        {
+            var seriesList = new List<ISeries>();
+
+            for (int i = 0; i < values.Count; i++)
+            {
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
+                var barColor = Colors[i % Colors.Length];
+
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i].Replace("\n", "-"),
+                    MaxBarWidth = 30,
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return tooltipFormatter(index, (double)point.Model.Y);
+                        return "N/A";
+                    }
+                };
+
+                seriesList.Add(series);
+            }
+
+            var (xAxes, yAxes) = CreateAxes(xAxisName, yAxisName, values, yLabelFormatter);
+            return (seriesList.ToArray(), xAxes, yAxes);
+        }
+
+        public (Axis[] X, Axis[] Y) CreateAxes(
+            string xName,
+            string yName,
+            List<double> values,
+            Func<double, string> yLabelFormatter)
+        {
+            // Автоматическое определение пределов оси Y
+            double minValue = values.Min();
+            double maxValue = values.Max();
+            double padding = (maxValue - minValue) * 0.1;
+
+            var xAxes = new[]
+            {
+            new Axis
+            {
+                // Установка Labeler в функцию, возвращающую пустую строку
+                Labeler = value => string.Empty,
+                Labels = null,
+                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                MinStep = 1,
+                Name = xName,
+                NamePaint = new SolidColorPaint(SKColors.Black)
+            }
+        };
+
+            var yAxes = new[]
+            {
+            new Axis
+            {
+                Labeler = yLabelFormatter,
+                MinLimit =Math.Max(0, minValue - padding),
+                MaxLimit = maxValue + padding,
+                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                Name = yName,
+                NamePaint = new SolidColorPaint(SKColors.Black)
+            }
+        };
+
+            return (xAxes, yAxes);
         }
     }
 }
