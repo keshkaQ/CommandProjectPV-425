@@ -15,7 +15,7 @@
     mc:Ignorable="d">
 
     <Grid>
-        <TabControl>
+        <TabControl Name="ChartTabControl">
             <TabItem Header="⏱️ Время выполнения">
                 <lvc:CartesianChart
                     x:Name="TimeChart"
@@ -36,6 +36,17 @@
                     Series="{Binding SpeedupSeries}"
                     XAxes="{Binding SpeedupXAxes}"
                     YAxes="{Binding SpeedupYAxes}" />
+            </TabItem>
+
+            <TabItem Header="📊 Статистика по методам">
+                <lvc:CartesianChart
+                    x:Name="MethodsStatsChart"
+                    Margin="20"
+                    LegendOrientation="Horizontal"
+                    LegendPosition="Bottom"
+                    Series="{Binding MethodStatsSeries}"
+                    XAxes="{Binding MethodStatsXAxes}"
+                    YAxes="{Binding MethodStatsYAxes}" />
             </TabItem>
         </TabControl>
     </Grid>

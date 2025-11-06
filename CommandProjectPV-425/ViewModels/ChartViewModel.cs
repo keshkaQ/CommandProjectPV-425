@@ -8,12 +8,14 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 
 namespace CommandProjectPV_425.ViewModels
 {
     public class ChartViewModel : INotifyPropertyChanged
     {
         private readonly IChartService _chartService;
+        private readonly IDataService _dataService;
 
         // Вспомогательный массив для цветов
         private readonly SKColor[] Colors =
@@ -22,14 +24,16 @@ namespace CommandProjectPV_425.ViewModels
             SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
             SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
         ];
-
         public ISeries[] TimeSeries { get; private set; }
         public ISeries[] SpeedupSeries { get; private set; }
+        public ISeries[] MethodStatsSeries { get; private set; }
 
         public Axis[] TimeXAxes { get; private set; }
         public Axis[] TimeYAxes { get; private set; }
         public Axis[] SpeedupXAxes { get; private set; }
         public Axis[] SpeedupYAxes { get; private set; }
+        public Axis[] MethodStatsXAxes { get; private set; }
+        public Axis[] MethodStatsYAxes { get; private set; }
 
         private string _title;
         public string Title
@@ -38,13 +42,15 @@ namespace CommandProjectPV_425.ViewModels
             set { _title = value; OnPropertyChanged(); }
         }
 
-        public ChartViewModel(IChartService chartService)
+        public ChartViewModel(IChartService chartService, IDataService dataService)
         {
             _chartService = chartService;
+            _dataService=dataService;
+
             InitializeCharts();
         }
 
-        public ChartViewModel() : this(new ChartService())
+        public ChartViewModel() : this(new ChartService(), new DataService())
         {
         }
 
@@ -53,11 +59,14 @@ namespace CommandProjectPV_425.ViewModels
             // Инициализация пустых графиков
             TimeSeries = Array.Empty<ISeries>();
             SpeedupSeries = Array.Empty<ISeries>();
+            MethodStatsSeries = Array.Empty<ISeries>();
 
             TimeXAxes = Array.Empty<Axis>();
             TimeYAxes = Array.Empty<Axis>();
             SpeedupXAxes = Array.Empty<Axis>();
             SpeedupYAxes = Array.Empty<Axis>();
+            MethodStatsXAxes = Array.Empty<Axis>();
+            MethodStatsYAxes = Array.Empty<Axis>();
         }
 
         public void UpdateCharts(List<string> labels, List<double> timeValues, List<double> speedupValues)
@@ -71,6 +80,7 @@ namespace CommandProjectPV_425.ViewModels
 
             UpdateTimeChart(labels, timeValues);
             UpdateSpeedupChart(labels, speedupValues);
+
 
             // Уведомляем об изменении всех свойств
             NotifyAllChartPropertiesChanged();
@@ -108,7 +118,7 @@ namespace CommandProjectPV_425.ViewModels
                     Labels = null,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
                     MinStep = 1,
-                    Name = "xName",
+                    Name = xName,
                     NamePaint = new SolidColorPaint(SKColors.Black)
                 }
             };
@@ -121,12 +131,83 @@ namespace CommandProjectPV_425.ViewModels
                     MinLimit =Math.Max(0, minValue - padding),
                     MaxLimit = maxValue + padding,
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = "yName",
+                    Name = yName,
                     NamePaint = new SolidColorPaint(SKColors.Black)
                 }
             };
 
             return (xAxes, yAxes);
+        }
+
+        public async Task LoadMethodStatisticsAsync()
+        {
+            try
+            {
+                // 1. Получение данных из БД
+                var stats = await _dataService.GetAverageTimePerMethodAsync();
+
+                // 2. Построение графика
+                UpdateMethodsStatsChart(stats);
+            }
+            catch (Exception ex)
+            {
+                // Обработка ошибки загрузки данных
+                MessageBox.Show($"Ошибка при загрузке статистики методов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Очистка графика при ошибке
+                MethodStatsSeries = Array.Empty<ISeries>();
+                OnPropertyChanged(nameof(MethodStatsSeries));
+            }
+        }
+
+        public void UpdateMethodsStatsChart(List<MethodStatistic> stats)
+        {
+            if (stats == null || stats.Count == 0)
+            {
+                MethodStatsSeries = Array.Empty<ISeries>();
+                MethodStatsXAxes = Array.Empty<Axis>();
+                MethodStatsYAxes = Array.Empty<Axis>();
+                OnPropertyChanged(nameof(MethodStatsSeries));
+                return;
+            }
+
+            var seriesList = new List<ISeries>();
+            var values = stats.Select(s => s.AverageTimeMs).ToList();
+            var labels = stats.Select(s => s.MethodName).ToList();
+
+            for (int i = 0; i < stats.Count; i++)
+            {
+                // Создаем отдельную серию для каждого столбца (как в ваших других методах)
+                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
+                var barColor = Colors[i % Colors.Length];
+
+                var series = new ColumnSeries<ObservablePoint>
+                {
+                    Values = singlePoint,
+                    Name = labels[i],
+                    MaxBarWidth = 30,
+                    Fill = new SolidColorPaint(barColor),
+                    Stroke = null,
+                    TooltipLabelFormatter = point =>
+                    {
+                        var index = (int)point.Model.X;
+                        if (index >= 0 && index < labels.Count)
+                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
+                        return "N/A";
+                    }
+                };
+                seriesList.Add(series);
+            }
+
+            MethodStatsSeries = seriesList.ToArray();
+
+            // Используем существующий метод CreateAxes, но с пользовательскими метками на оси X
+            (MethodStatsXAxes, MethodStatsYAxes) = CreateAxes(
+                "Методы",
+                "Среднее время выполнения",
+                values,
+                Helpers.TimeFormatter.FormatTimeShort);
+
+            NotifyAllChartPropertiesChanged();
         }
 
         private void UpdateTimeChart(List<string> labels, List<double> values)
@@ -229,6 +310,9 @@ namespace CommandProjectPV_425.ViewModels
             OnPropertyChanged(nameof(TimeYAxes));
             OnPropertyChanged(nameof(SpeedupXAxes));
             OnPropertyChanged(nameof(SpeedupYAxes));
+            OnPropertyChanged(nameof(MethodStatsSeries));
+            OnPropertyChanged(nameof(MethodStatsXAxes));
+            OnPropertyChanged(nameof(MethodStatsYAxes));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

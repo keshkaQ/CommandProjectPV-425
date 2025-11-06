@@ -1,4 +1,5 @@
 ﻿using CommandProjectPV_425.Models;
+using CommandProjectPV_425.Services;
 
 namespace CommandProjectPV_425.Interfaces
 {
@@ -9,5 +10,6 @@ namespace CommandProjectPV_425.Interfaces
         Task SaveResultsToDatabaseAsync(IEnumerable<BenchmarkResult> results);
         Task<List<BenchmarkResult>> LoadResultsFromDatabaseAsync();
         Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results);
+        Task<List<MethodStatistic>> GetAverageTimePerMethodAsync();
     }
 }
