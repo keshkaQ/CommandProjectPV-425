@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:CommandProjectPV_425.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Измерение производительности задач с помощью BenchmarkDotNet"
-    Width="1400"
+    Width="1430"
     Height="700"
     Icon="/Images/Иконка.ico"
     ResizeMode="NoResize"
@@ -260,13 +260,7 @@
                         Content="💾 Сохранить в БД"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
-                    <Button
-                        x:Name="ClearResultsBtn"
-                        Background="#E74C3C"
-                        Click="ClearResultsBtn_Click"
-                        Content="🗑️ Очистить"
-                        IsEnabled="{Binding IsNotBusy}"
-                        Style="{StaticResource ActionButtonStyle}" />
+
                     <Button
                         x:Name="ExportBtn"
                         Background="#F39C12"
@@ -275,11 +269,25 @@
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
+                        x:Name="ExportJsonBtn"
+                        Background="IndianRed"
+                        Click="ExportJsonBtn_Click"
+                        Content="📤 Импорт из JSON"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Style="{StaticResource ActionButtonStyle}" />
+                    <Button
                         x:Name="ToJsonBtn"
                         Background="Gold"
                         Click="ToJsonBtn_Click"
                         Content="📄 Сохранить в JSON"
                         Foreground="#2C3E50"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Style="{StaticResource ActionButtonStyle}" />
+                    <Button
+                        x:Name="ClearResultsBtn"
+                        Background="#E74C3C"
+                        Click="ClearResultsBtn_Click"
+                        Content="🗑️ Очистить результат"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                 </StackPanel>
@@ -308,7 +316,7 @@
                     Text="{Binding ErrorText}" />
             </StackPanel>
         </Border>
-        
+
         <Border Grid.Row="5" Style="{StaticResource BorderStyle}">
             <DataGrid
                 x:Name="ResultsDataGrid"

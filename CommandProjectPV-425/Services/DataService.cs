@@ -1,8 +1,11 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CommandProjectPV_425.Services
 {
@@ -49,6 +52,9 @@ namespace CommandProjectPV_425.Services
             // преобразуем результаты для сериализации в json
             var resultsToSave = results.Select(r => new
             {
+                r.Processor,
+                r.CoreCount,
+                r.OperatingSystem,
                 r.TaskType,
                 r.DataSize,
                 r.MethodName,
@@ -68,6 +74,57 @@ namespace CommandProjectPV_425.Services
             // сериализуем данные в JSON строку и записываем в файл
             string json = JsonSerializer.Serialize(resultsToSave, options);
             await File.WriteAllTextAsync(filePath, json);
+        }
+
+        public async Task<List<BenchmarkResult>> LoadResultsFromJsonAsync(string json)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(json))
+                    throw new ArgumentException("JSON строка не может быть пустой");
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new DateTimeConverter() }
+                };
+                var results = JsonSerializer.Deserialize<List<BenchmarkResult>>(json, options);
+                return results ?? new List<BenchmarkResult>();
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Ошибка формата JSON: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Ошибка загрузки данных из JSON: {ex.Message}", ex);
+            }
+        }
+        private class DateTimeConverter : JsonConverter<DateTime>
+        {
+            public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var dateString = reader.GetString();
+                    if (DateTime.TryParse(dateString, out DateTime date))
+                    {
+                        return date;
+                    }
+                    if (DateTime.TryParseExact(dateString, "yyyy-MM-dd HH:mm:ss",
+                        CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                    {
+                        return date;
+                    }
+                }
+                return DateTime.Now;
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss"));
+            }
         }
     }
 }

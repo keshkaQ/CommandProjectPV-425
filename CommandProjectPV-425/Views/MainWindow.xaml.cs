@@ -31,8 +31,9 @@ namespace CommandProjectPV_425.Views
         private async void ExportBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.LoadFromDatabaseAsync();
         private async void ToJsonBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.SaveToJsonAsync();
         private async void ShowChartsBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.OpenCharts();
+        private async void ExportJsonBtn_Click(object sender, RoutedEventArgs e) => await _viewModel.LoadFromJsonAsync();
         private void ClearResultsBtn_Click(object sender, RoutedEventArgs e) => _viewModel.ClearResults();
-       
+
         // метод для получение размера и типа задачи из combobox
         private (string typeTask, int size) GetTypeAndSizeTask()
         {
@@ -49,5 +50,7 @@ namespace CommandProjectPV_425.Views
                 return (string.Empty, default);
             }
         }
+
+        
     }
 }

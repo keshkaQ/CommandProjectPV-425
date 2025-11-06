@@ -1,8 +1,10 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Views;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 
@@ -222,6 +224,68 @@ namespace CommandProjectPV_425.ViewModels
             finally
             {
                 IsBusy = false;
+            }
+        }
+
+        public async Task LoadFromJsonAsync()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                FilterIndex = 1,
+                Title = "Выберите JSON файл с результатами тестов",
+                DefaultExt = "json"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string selectedFilePath = openFileDialog.FileName;
+
+                if (!selectedFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowError("Выбранный файл не является JSON файлом");
+                    return;
+                }
+
+                try
+                {
+                    IsBusy = true;
+                    HideError();
+                    StatusText = "Загрузка данных из JSON...";
+
+                    var json = await File.ReadAllTextAsync(selectedFilePath);
+
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        ShowError("JSON файл пуст");
+                        return;
+                    }
+
+                    var results = await _dataService.LoadResultsFromJsonAsync(json);
+
+                    if (results == null || !results.Any())
+                    {
+                        ShowError("В JSON файле нет данных");
+                        return;
+                    }
+
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        Results.Clear();
+                        foreach (var result in results)
+                            Results.Add(result);
+                    });
+
+                    ShowSuccess($"Загружено {results.Count} записей из JSON файла");
+                }
+                catch (Exception ex)
+                {
+                    ShowError($"Ошибка загрузки данных из JSON: {ex.Message}");
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
             }
         }
 
