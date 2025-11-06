@@ -8,106 +8,34 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Графики производительности"
     Width="1200"
-    Height="800"
+    Height="700"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"
     mc:Ignorable="d">
-    <Window.Resources>
-        <Style x:Key="ChartStyle" TargetType="lvc:CartesianChart">
-            <Setter Property="Margin" Value="10" />
-            <Setter Property="LegendPosition" Value="Top" />
-            <Setter Property="LegendFontSize" Value="12" />
-            <Setter Property="LegendBackground" Value="#F0F0F0" />
-        </Style>
-    </Window.Resources>
 
     <Grid>
         <TabControl>
-            <TabItem Header="Основные метрики">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <lvc:CartesianChart
-                        x:Name="TimeChart"
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="MemoryChart"
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="SpeedupChart"
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="EfficiencyChart"
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Style="{StaticResource ChartStyle}" />
-                </Grid>
+            <TabItem Header="⏱️ Время выполнения">
+                <lvc:CartesianChart
+                    x:Name="TimeChart"
+                    Margin="20"
+                    LegendOrientation="Horizontal"
+                    LegendPosition="Bottom"
+                    Series="{Binding TimeSeries}"
+                    XAxes="{Binding TimeXAxes}"
+                    YAxes="{Binding TimeYAxes}" />
             </TabItem>
 
-            <TabItem Header="Статистика">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <lvc:CartesianChart
-                        x:Name="ErrorChart"
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="StdDevChart"
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="TimeWithErrorChart"
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="PerformanceProfileChart"
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Style="{StaticResource ChartStyle}" />
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Сравнение">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <lvc:CartesianChart
-                        x:Name="MemoryTimeComparisonChart"
-                        Grid.Row="0"
-                        Style="{StaticResource ChartStyle}" />
-                    <lvc:CartesianChart
-                        x:Name="SpeedupMemoryChart"
-                        Grid.Row="1"
-                        Style="{StaticResource ChartStyle}" />
-                </Grid>
+            <TabItem Header="⚡ Ускорение">
+                <lvc:CartesianChart
+                    x:Name="SpeedupChart"
+                    Margin="20"
+                    LegendOrientation="Horizontal"
+                    LegendPosition="Bottom"
+                    Series="{Binding SpeedupSeries}"
+                    XAxes="{Binding SpeedupXAxes}"
+                    YAxes="{Binding SpeedupYAxes}" />
             </TabItem>
         </TabControl>
     </Grid>

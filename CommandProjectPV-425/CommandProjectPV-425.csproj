@@ -5,12 +5,44 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <RootNamespace>CommandProjectPV_425</RootNamespace>
     <Nullable>enable</Nullable>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="DataBase\benchmark.db" />
+    <None Remove="Images\result_logo_top_v2.jpeg" />
+    <None Remove="Images\result_logo_v2.png" />
+    <None Remove="Images\Иконка.ico" />
+    <None Remove="Views\99687e70-11ff-4a99-aa34-30cfa0df81c0.jpg" />
+  </ItemGroup>
+
 	<ItemGroup>
+		<PackageReference Include="BenchmarkDotNet" Version="0.15.5" />
 		<PackageReference Include="BenchmarkDotNet.Annotations" Version="0.15.5" />
 		<PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-beta.90" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="DataBase\benchmark.db">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Resource>
+	  <Resource Include="Images\result_logo_top_v2.jpeg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Resource>
+	  <Resource Include="Images\result_logo_v2.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Resource>
+	  <Resource Include="Images\Иконка.ico">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Resource>
 	</ItemGroup>
 </Project>
