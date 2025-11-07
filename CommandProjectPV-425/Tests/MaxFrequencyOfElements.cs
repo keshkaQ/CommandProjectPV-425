@@ -318,66 +318,66 @@ namespace CommandProjectPV_425.Tests
         }
 
 
-        //[Benchmark]
-        //public unsafe int Array_SIMD_Intrinsics()
-        //{
-        //    if (!Avx2.IsSupported)
-        //        throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
+        [Benchmark]
+        public unsafe int Array_SIMD_Intrinsics()
+        {
+            if (!Avx2.IsSupported)
+                throw new PlatformNotSupportedException("AVX2 not supported on this CPU");
 
-        //    var counts = new Dictionary<int, int>(_array.Length / 4);
-        //    int length = _array.Length;
-        //    int maxFreq = 0;
+            var counts = new Dictionary<int, int>(_array.Length / 4);
+            int length = _array.Length;
+            int maxFreq = 0;
 
-        //    fixed (int* ptr = _array)
-        //    {
-        //        int i = 0;
+            fixed (int* ptr = _array)
+            {
+                int i = 0;
 
-        //        // Основной цикл (группа по 8 с использованием AVX)
-        //        for (; i <= length - 8; i += 8)
-        //        {
-        //            var vector = Avx.LoadVector256(ptr + i);
-        //            for (int j = 0; j < 8; j++)
-        //            {
-        //                // GetElement(j) извлекает элемент из SIMD-регистра
-        //                int val = vector.GetElement(j);
+                // Основной цикл (группа по 8 с использованием AVX)
+                for (; i <= length - 8; i += 8)
+                {
+                    var vector = Avx.LoadVector256(ptr + i);
+                    for (int j = 0; j < 8; j++)
+                    {
+                        // GetElement(j) извлекает элемент из SIMD-регистра
+                        int val = vector.GetElement(j);
 
-        //                if (counts.TryGetValue(val, out int currentCount))
-        //                {
-        //                    currentCount++;
-        //                    counts[val] = currentCount;
-        //                }
-        //                else
-        //                {
-        //                    currentCount = 1;
-        //                    counts.Add(val, currentCount);
-        //                }
+                        if (counts.TryGetValue(val, out int currentCount))
+                        {
+                            currentCount++;
+                            counts[val] = currentCount;
+                        }
+                        else
+                        {
+                            currentCount = 1;
+                            counts.Add(val, currentCount);
+                        }
 
-        //                if (currentCount > maxFreq)
-        //                    maxFreq = currentCount;
-        //            }
-        //        }
+                        if (currentCount > maxFreq)
+                            maxFreq = currentCount;
+                    }
+                }
 
-        //        // Хвостовой цикл
-        //        for (; i < length; i++)
-        //        {
-        //            int val = ptr[i];
+                // Хвостовой цикл
+                for (; i < length; i++)
+                {
+                    int val = ptr[i];
 
-        //            if (counts.TryGetValue(val, out int currentCount))
-        //            {
-        //                currentCount++;
-        //                counts[val] = currentCount;
-        //            }
-        //            else
-        //            {
-        //                currentCount = 1;
-        //                counts.Add(val, currentCount);
-        //            }
+                    if (counts.TryGetValue(val, out int currentCount))
+                    {
+                        currentCount++;
+                        counts[val] = currentCount;
+                    }
+                    else
+                    {
+                        currentCount = 1;
+                        counts.Add(val, currentCount);
+                    }
 
-        //            if (currentCount > maxFreq)
-        //                maxFreq = currentCount;
-        //        }
-        //    }
-        //    return maxFreq;
-        //}
+                    if (currentCount > maxFreq)
+                        maxFreq = currentCount;
+                }
+            }
+            return maxFreq;
+        }
     }
 }

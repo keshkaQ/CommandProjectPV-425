@@ -24,15 +24,15 @@ namespace CommandProjectPV_425.Services
             // базовая конфигурация
             // отключаем валидацию оптимизаций (для более стабильных результатов)
             // добавляем Job с минимальными настройками для быстрого выполнения
-            var config = ManualConfig
-                .Create(DefaultConfig.Instance)
-                .WithOptions(ConfigOptions.DisableOptimizationsValidator)
-                .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));
+            //var config = ManualConfig
+            //    .Create(DefaultConfig.Instance)
+            //    .WithOptions(ConfigOptions.DisableOptimizationsValidator)
+            //    .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));
 
             // запускаем бенчмарк в отдельном потоке чтобы не блокировать UI
             return await Task.Run(() =>
             {
-                var summary = BenchmarkRunner.Run(benchmarkType, config);
+                var summary = BenchmarkRunner.Run(benchmarkType);
                 return ProcessBenchmarkSummary(summary, taskType, size);
             });
         }
