@@ -2,262 +2,189 @@
 using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Services;
 using LiveChartsCore;
-using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Windows;
 
-namespace CommandProjectPV_425.ViewModels
+namespace CommandProjectPV_425.ViewModels;
+
+public class ChartViewModel : BaseViewModel
 {
-    public class ChartViewModel : INotifyPropertyChanged
+    private readonly IChartService _chartService;
+    private readonly IDataService _dataService;
+
+    public ISeries[] TimeSeries { get; private set; }
+    public ISeries[] SpeedupSeries { get; private set; }
+    public ISeries[] MethodStatsSeries { get; private set; }
+
+    public Axis[] TimeXAxes { get; private set; }
+    public Axis[] TimeYAxes { get; private set; }
+    public Axis[] SpeedupXAxes { get; private set; }
+    public Axis[] SpeedupYAxes { get; private set; }
+    public Axis[] MethodStatsXAxes { get; private set; }
+    public Axis[] MethodStatsYAxes { get; private set; }
+
+    private string _title;
+    public string Title
     {
-        private readonly IChartService _chartService;
-        private ObservableCollection<BenchmarkResult> _results;
+        get => _title;
+        set { _title = value; OnPropertyChanged(); }
+    }
 
-        public ISeries[] TimeSeries { get; private set; }
-        public ISeries[] SpeedupSeries { get; private set; }
+    public ChartViewModel(IChartService chartService, IDataService dataService)
+    {
+        _chartService = chartService;
+        _dataService = dataService;
 
-        public Axis[] TimeXAxes { get; private set; }
-        public Axis[] TimeYAxes { get; private set; }
-        public Axis[] SpeedupXAxes { get; private set; }
-        public Axis[] SpeedupYAxes { get; private set; }
+        InitializeCharts();
+    }
 
-        private string _title;
-        public string Title
+    public ChartViewModel() : this(new ChartService(), new DataService())
+    {
+    }
+
+    private void InitializeCharts()
+    {
+        // Инициализация пустых графиков
+        TimeSeries = Array.Empty<ISeries>();
+        SpeedupSeries = Array.Empty<ISeries>();
+
+        MethodStatsSeries = Array.Empty<ISeries>();
+
+        TimeXAxes = Array.Empty<Axis>();
+        TimeYAxes = Array.Empty<Axis>();
+        SpeedupXAxes = Array.Empty<Axis>();
+        SpeedupYAxes = Array.Empty<Axis>();
+
+        MethodStatsXAxes = Array.Empty<Axis>();
+        MethodStatsYAxes = Array.Empty<Axis>();
+    }
+
+    public void UpdateCharts(List<string> labels, List<double> timeValues, List<double> speedupValues)
+    {
+        if (labels == null || timeValues == null || speedupValues == null ||
+            labels.Count == 0 || timeValues.Count == 0 || speedupValues.Count == 0)
         {
-            get => _title;
-            set { _title = value; OnPropertyChanged(); }
+            ClearCharts(); ;
+            return;
         }
 
-        public ChartViewModel(IChartService chartService)
-        {
-            _chartService = chartService;
-            InitializeCharts();
-        }
+        UpdateTimeChart(labels, timeValues);
+        UpdateSpeedupChart(labels, speedupValues);
 
-        public ChartViewModel() : this(new ChartService())
-        {
-        }
 
-        private void InitializeCharts()
-        {
-            TimeSeries = Array.Empty<ISeries>();
-            SpeedupSeries = Array.Empty<ISeries>();
+        // Уведомляем об изменении всех свойств
+        NotifyAllChartPropertiesChanged();
+    }
 
-            TimeXAxes = Array.Empty<Axis>();
-            TimeYAxes = Array.Empty<Axis>();
-            SpeedupXAxes = Array.Empty<Axis>();
-            SpeedupYAxes = Array.Empty<Axis>();
-        }
-
-        public void UpdateCharts(List<string> labels, List<double> timeValues, List<double> speedupValues)
-        {
-            if (labels == null || timeValues == null || speedupValues == null ||
-                labels.Count == 0 || timeValues.Count == 0 || speedupValues.Count == 0)
-            {
-                InitializeCharts();
-                OnPropertyChanged(nameof(TimeSeries));
-                OnPropertyChanged(nameof(SpeedupSeries));
-                OnPropertyChanged(nameof(TimeXAxes));
-                OnPropertyChanged(nameof(TimeYAxes));
-                OnPropertyChanged(nameof(SpeedupXAxes));
-                OnPropertyChanged(nameof(SpeedupYAxes));
-                return;
-            }
-
-            UpdateTimeChart(labels, timeValues);
-            UpdateSpeedupChart(labels, speedupValues);
-
-            OnPropertyChanged(nameof(TimeSeries));
-            OnPropertyChanged(nameof(SpeedupSeries));
-            OnPropertyChanged(nameof(TimeXAxes));
-            OnPropertyChanged(nameof(TimeYAxes));
-            OnPropertyChanged(nameof(SpeedupXAxes));
-            OnPropertyChanged(nameof(SpeedupYAxes));
-        }
-
-        public void UpdateCharts(IEnumerable<BenchmarkResult> results)
-        {
-            if (results == null || !results.Any())
-            {
-                InitializeCharts();
-                return;
-            }
-
-            var (labels, timeValues, speedupValues) = _chartService.PrepareChartData(results);
-            UpdateCharts(labels, timeValues, speedupValues);
-        }
-
-        // Вспомогательный массив для цветов
-        private readonly SKColor[] Colors =
-        [
-            SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
-        ];
-
-        private void UpdateTimeChart(List<string> labels, List<double> values)
-        {
-            var seriesList = new List<ISeries>();
-
-            for (int i = 0; i < values.Count; i++)
-            {
-                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-                var barColor = Colors[i % Colors.Length];
-
-                var series = new ColumnSeries<ObservablePoint>
-                {
-                    Values = singlePoint,
-                    Name = labels[i].Replace("\n", "-"),
-                    MaxBarWidth = 30,
-                    Fill = new SolidColorPaint(barColor),
-                    Stroke = null,
-                    TooltipLabelFormatter = point =>
-                    {
-                        var index = (int)point.Model.X;
-                        if (index >= 0 && index < labels.Count)
-                            return $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(point.Model.Y)}";
-                        return "N/A";
-                    }
-                };
-
-                seriesList.Add(series);
-            }
-
-            TimeSeries = seriesList.ToArray();
-
-            double minValue = values.Min();
-            double maxValue = values.Max();
-            double padding = (maxValue - minValue) * 0.1;
-
-            TimeXAxes =
-            [
-                new Axis
-                {
-                    Labeler = value => string.Empty,
-                    Labels = null,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    MinStep = 1,
-                    Name = "Методы",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-
-            TimeYAxes =
-            [
-                new Axis
-                {
-                    Labeler = value => Helpers.TimeFormatter.FormatTimeShort(value),
-                    MinLimit = Math.Max(0, minValue - padding),
-                    MaxLimit = maxValue + padding,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = "Время выполнения",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-        }
-
-        private void UpdateSpeedupChart(List<string> labels, List<double> speedupPercentages)
-        {
-            var seriesList = new List<ISeries>();
-
-            for (int i = 0; i < speedupPercentages.Count; i++)
-            {
-                var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, speedupPercentages[i]) };
-
-                // Определяем цвет столбца в зависимости от значения
-                SKColor barColor = speedupPercentages[i] switch
-                {
-                    > 0 => SKColors.MediumSeaGreen,  // Зеленый для положительного ускорения
-                    < 0 => SKColors.Tomato,          // Красный для отрицательного ускорения
-                    _ => SKColors.Gray               // Серый для нуля
-                };
-
-                var series = new ColumnSeries<ObservablePoint>
-                {
-                    Values = singlePoint,
-                    Name = labels[i].Replace("\n", "-"),
-                    MaxBarWidth = 30,
-                    Fill = new SolidColorPaint(barColor),
-                    Stroke = null,
-                    TooltipLabelFormatter = point =>
-                    {
-                        var index = (int)point.Model.X;
-                        if (index >= 0 && index < labels.Count)
-                        {
-                            var percentage = point.Model.Y;
-                            return $"{labels[index]}\n{FormatSpeedupForTooltip(percentage)}";
-                        }
-                        return "N/A";
-                    }
-                };
-
-                seriesList.Add(series);
-            }
-
-            SpeedupSeries = seriesList.ToArray();
-
-            // Для графика ускорения в процентах устанавливаем ось Y с процентами
-            double minValue = speedupPercentages.Min();
-            double maxValue = speedupPercentages.Max();
-            double padding = Math.Max((maxValue - minValue) * 0.1, 10); // Минимальный отступ 10%
-
-            SpeedupXAxes =
-            [
-                new Axis
-                {
-                    Labeler = value => string.Empty,
-                    Labels = null,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    MinStep = 1,
-                    Name = "Методы",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-
-            SpeedupYAxes =
-            [
-                new Axis
-                {
-                    Labeler = value => $"{value:F0}%", // Форматируем как проценты
-                    MinLimit = minValue - padding,
-                    MaxLimit = maxValue + padding,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = "Прирост производительности",
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            ];
-        }
-
-        // Вспомогательный метод для форматирования ускорения в тултипе
-        private string FormatSpeedupForTooltip(double? percentage)
-        {
-            if (percentage > 0)
-                return $"+{percentage:F1}%";
-            else if (percentage < 0)
-                return $"{percentage:F1}%";
-            else
-                return "0%";
-        }
-
-        public void ClearCharts()
+    public void UpdateCharts(IEnumerable<BenchmarkResult> results)
+    {
+        if (results == null || !results.Any())
         {
             InitializeCharts();
-            OnPropertyChanged(nameof(TimeSeries));
-            OnPropertyChanged(nameof(SpeedupSeries));
-            OnPropertyChanged(nameof(TimeXAxes));
-            OnPropertyChanged(nameof(TimeYAxes));
-            OnPropertyChanged(nameof(SpeedupXAxes));
-            OnPropertyChanged(nameof(SpeedupYAxes));
+            return;
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        var (labels, timeValues, speedupValues) = _chartService.PrepareChartData(results);
+        UpdateCharts(labels, timeValues, speedupValues);
+    }
+
+    public async Task LoadMethodStatisticsAsync()
+    {
+        try
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            // 1. Получение данных из БД
+            var stats = await _dataService.GetAverageTimePerMethodAsync();
+
+            // 2. Построение графика
+            UpdateMethodsStatsChart(stats);
         }
+        catch (Exception ex)
+        {
+            // Обработка ошибки загрузки данных
+            MessageBox.Show($"Ошибка при загрузке статистики методов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            // Очистка графика при ошибке
+            MethodStatsSeries = Array.Empty<ISeries>();
+            OnPropertyChanged(nameof(MethodStatsSeries));
+        }
+    }
+
+    public void UpdateMethodsStatsChart(List<MethodStatistic> stats)
+    {
+        if (stats == null || stats.Count == 0)
+        {
+            MethodStatsSeries = Array.Empty<ISeries>();
+            MethodStatsXAxes = Array.Empty<Axis>();
+            MethodStatsYAxes = Array.Empty<Axis>();
+            OnPropertyChanged(nameof(MethodStatsSeries));
+            return;
+        }
+
+        var seriesList = new List<ISeries>();
+        var values = stats.Select(s => s.AverageTimeMs).ToList();
+        var labels = stats.Select(s => s.MethodName).ToList();
+
+        (MethodStatsSeries, MethodStatsXAxes, MethodStatsYAxes) = _chartService.CreateColumnChart(
+            labels,
+            values,
+            "Методы",
+            "Среднее время выполнения",
+            Helpers.TimeFormatter.FormatTimeShort,
+            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}", false
+        );
+
+        NotifyAllChartPropertiesChanged();
+    }
+
+    private void UpdateTimeChart(List<string> labels, List<double> values)
+    {
+        (TimeSeries, TimeXAxes, TimeYAxes) = _chartService.CreateColumnChart(
+            labels,
+            values,
+            "Методы",
+            "Время выполнения",
+            Helpers.TimeFormatter.FormatTimeShort,
+            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}", false
+        );
+    }
+
+    private void UpdateSpeedupChart(List<string> labels, List<double> values)
+    {
+        (SpeedupSeries, SpeedupXAxes, SpeedupYAxes) = _chartService.CreateColumnChart(
+            labels,
+            values,
+            "Методы",
+            "Ускорение (%)",
+              v => $"{v:0.##}%", // Форматируем как проценты
+        (index, val) => $"{labels[index]}\n{FormatSpeedupTooltip(val)}",
+        true // ✅ Указываем, что это график ускорения
+        );
+    }
+
+    private string FormatSpeedupTooltip(double value)
+    {
+        if (value > 0)
+            return $"+{value:0.##}% ускорение";
+        else if (value < 0)
+            return $"{value:0.##}% замедление";
+        else
+            return "0% (без изменений)";
+    }
+    public void ClearCharts()
+    {
+        InitializeCharts();
+        NotifyAllChartPropertiesChanged();
+    }
+
+    private void NotifyAllChartPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(TimeSeries));
+        OnPropertyChanged(nameof(SpeedupSeries));
+        OnPropertyChanged(nameof(TimeXAxes));
+        OnPropertyChanged(nameof(TimeYAxes));
+        OnPropertyChanged(nameof(SpeedupXAxes));
+        OnPropertyChanged(nameof(SpeedupYAxes));
+        OnPropertyChanged(nameof(MethodStatsSeries));
+        OnPropertyChanged(nameof(MethodStatsXAxes));
+        OnPropertyChanged(nameof(MethodStatsYAxes));
     }
 }

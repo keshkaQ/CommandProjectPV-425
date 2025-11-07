@@ -1,7 +1,6 @@
 ﻿using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
@@ -101,6 +100,41 @@ namespace CommandProjectPV_425.Services
                 throw new InvalidOperationException($"Ошибка загрузки данных из JSON: {ex.Message}", ex);
             }
         }
+
+        public async Task<List<MethodStatistic>> GetAverageTimePerMethodAsync()
+        {
+            using var context = new AppDbContext(); // Замените на ваш контекст БД
+
+            // 1. Загружаем все результаты
+            var allResults = await context.BenchmarkResults.ToListAsync();
+
+            // 2. Группируем по имени метода и рассчитываем среднее время
+            var statistics = allResults
+                .GroupBy(r => r.MethodName)
+                .Select(g =>
+                {
+                    // Берем среднее значение из всех ExecutionTime, конвертируя их из строки в double (мс)
+                    var validResults = g.Where(r => r.ExecutionTime != "Failed");
+
+                    // ВАЖНО: ParseTimeToMs должен возвращать double (мс)
+                    var averageTime = validResults.Any()
+                        ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
+                        : 0.0;
+
+                    return new MethodStatistic
+                    {
+                        MethodName = g.Key,
+                        AverageTimeMs = averageTime,
+                        AverageSpeedup = 0.0
+                    };
+                })
+                .Where(s => s.AverageTimeMs > 0) // Удаляем методы, у которых нет успешных результатов
+                .OrderBy(s => s.AverageTimeMs)
+                .ToList();
+
+            return statistics;
+        }
+
         private class DateTimeConverter : JsonConverter<DateTime>
         {
             public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -126,5 +160,12 @@ namespace CommandProjectPV_425.Services
                 writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss"));
             }
         }
+    }
+
+    public class MethodStatistic
+    {
+        public string MethodName { get; set; }
+        public double AverageTimeMs { get; set; }
+        public double AverageSpeedup { get; set; }
     }
 }

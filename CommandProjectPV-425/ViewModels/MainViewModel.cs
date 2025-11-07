@@ -12,11 +12,11 @@ namespace CommandProjectPV_425.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly IBenchmarkService _benchmarkService;
-        private readonly IDataService _dataService;
-        private readonly IChartService _chartService;
+        private readonly IBenchmarkService _benchmarkService;  // запуск тестов производительности
+        private readonly IDataService _dataService;            // работа с данными (БД, JSON)
+        private readonly IChartService _chartService;          // подготовка данных для графиков
 
-        public ObservableCollection<BenchmarkResult> Results { get; set; }
+        public ObservableCollection<BenchmarkResult> Results { get; set; } // Коллекция результатов для datagrid
 
         // Блок ошибок
         private Visibility _errorVisibility = Visibility.Collapsed;
@@ -48,6 +48,7 @@ namespace CommandProjectPV_425.ViewModels
             set { _progressValue = value; OnPropertyChanged(); }
         }
 
+        // флаг для блокировки кнопок
         private bool _isBusy;
         public bool IsBusy
         {
@@ -104,17 +105,57 @@ namespace CommandProjectPV_425.ViewModels
                 StatusText = "Запуск тестов. Немного подождите...";
                 ProgressValue = 0;
 
-                var results = await _benchmarkService.RunBenchmarkAsync(taskType, size);
-
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                // Добавление списока всех задач
+                var allTasks = new[]
                 {
-                    Results.Clear();
-                    foreach (var result in results)
-                        Results.Add(result);
-                });
+                    "Count Numbers Above Average",
+                    "Divisible Three or Five",
+                    "Find Prime Numbers",
+                    "Maximum Of Non Extreme Elements",
+                    "Max Frequency Of Elements"
+                };
 
-                ShowSuccess($"Тестирование завершено! Протестировано {results.Count} методов.");
-                ProgressValue = 100;
+                // Проверка выбран ли пункт все задачи
+                bool runAllTasks = taskType == "All Tasks";
+
+                Results.Clear();
+
+                if (runAllTasks)
+                {
+                    int total = allTasks.Length;
+                    int completed = 0;
+
+                    foreach (var currentTask in allTasks)
+                    {
+                        StatusText = $"Выполняется: {currentTask}...";
+                        var results = await _benchmarkService.RunBenchmarkAsync(currentTask, size);
+
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            foreach (var result in results)
+                                Results.Add(result);
+                        });
+
+                        completed++;
+                        ProgressValue = (double)completed / total * 100;
+                    }
+
+                    ShowSuccess("Тестирование завершено! Все задачи успешно выполнены.");
+                }
+                else
+                {
+                    var results = await _benchmarkService.RunBenchmarkAsync(taskType, size);
+
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        Results.Clear();
+                        foreach (var result in results)
+                            Results.Add(result);
+                    });
+
+                    ShowSuccess($"Тестирование завершено! Протестировано {results.Count} методов.");
+                    ProgressValue = 100;
+                }
             }
             catch (Exception ex)
             {
@@ -187,7 +228,7 @@ namespace CommandProjectPV_425.ViewModels
             }
         }
 
-        public async Task OpenCharts()
+        public void OpenCharts()
         {
             if (!Results.Any())
             {
@@ -198,6 +239,17 @@ namespace CommandProjectPV_425.ViewModels
             var chartWindow = new ChartWindow();
             chartWindow.UpdateCharts(Results);
             chartWindow.Show();
+        }
+        public void OpenStatistics()
+        {
+            if (!Results.Any())
+            {
+                ShowError("Для построения графиков, загрузите данные с базы данных");
+                return;
+            }
+            var analyticWindow = new AnalyticsChartWindow();
+            analyticWindow.UpdateCharts();
+            analyticWindow.Show();
         }
 
         public async Task SaveToJsonAsync()

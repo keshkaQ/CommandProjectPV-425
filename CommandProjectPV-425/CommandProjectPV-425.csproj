@@ -32,9 +32,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Resource Include="DataBase\benchmark.db">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="Images\result_logo_top_v2.jpeg">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Resource>
@@ -44,5 +41,9 @@
 	  <Resource Include="Images\Иконка.ico">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="DataBase\" />
 	</ItemGroup>
 </Project>

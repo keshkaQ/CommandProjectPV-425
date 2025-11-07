@@ -24,7 +24,7 @@ namespace CommandProjectPV_425.Services
             // базовая конфигурация
             // отключаем валидацию оптимизаций (для более стабильных результатов)
             // добавляем Job с минимальными настройками для быстрого выполнения
-            var config = ManualConfig                                              
+            var config = ManualConfig
                 .Create(DefaultConfig.Instance)
                 .WithOptions(ConfigOptions.DisableOptimizationsValidator)
                 .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));

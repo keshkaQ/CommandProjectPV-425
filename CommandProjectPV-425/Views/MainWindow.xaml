@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:CommandProjectPV_425.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Измерение производительности задач с помощью BenchmarkDotNet"
-    Width="1430"
+    Width="1330"
     Height="700"
     Icon="/Images/Иконка.ico"
     ResizeMode="NoResize"
@@ -193,6 +193,7 @@
                         <ComboBoxItem Content="Find Prime Numbers" />
                         <ComboBoxItem Content="Maximum Of Non Extreme Elements" />
                         <ComboBoxItem Content="Max Frequency Of Elements" />
+                        <ComboBoxItem Content="All Tasks" />
                     </ComboBox>
 
                     <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Размер входных данных:" />
@@ -208,22 +209,21 @@
             </StackPanel>
         </Border>
 
-
         <Border
             Grid.Row="3"
             Margin="0,0,0,10"
             Style="{StaticResource BorderStyle}">
             <StackPanel Orientation="Horizontal">
                 <Border
-                    Width="300"
-                    Height="40"
+                    Width="200"
+                    Height="32"
                     Margin="0,0,20,0"
-                    Padding="12,8"
+                    Padding="8,5"
                     Style="{StaticResource BorderStyle}">
                     <Grid>
                         <ProgressBar
                             x:Name="ProgressBar"
-                            Height="15"
+                            Height="10"
                             IsIndeterminate="{Binding IsBusy}"
                             Maximum="100"
                             Value="{Binding ProgressValue}" />
@@ -231,66 +231,86 @@
                             x:Name="ProgressText"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontSize="12"
+                            FontSize="10"
                             FontWeight="Bold"
                             Foreground="#2C3E50"
                             Text="{Binding ProgressValue, StringFormat='{}{0}%'}" />
                     </Grid>
                 </Border>
 
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,15,0" Orientation="Horizontal">
                     <Button
                         x:Name="RunBenchmarkBtn"
+                        Padding="10,5"
                         Background="#27AE60"
                         Click="RunBenchmarkBtn_Click"
-                        Content="🚀 Запустить тесты"
+                        Content="🚀 Тесты"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ShowChartsBtn"
+                        Padding="10,5"
                         Background="#8E44AD"
                         Click="ShowChartsBtn_Click"
                         Content="📈 Графики"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
+                </StackPanel>
+
+                <StackPanel Margin="0,0,15,0" Orientation="Horizontal">
+                    <Button
+                        x:Name="ShowAnalyticsBtn"
+                        Padding="10,5"
+                        Background="DarkSlateGray"
+                        Click="ShowAnalyticsBtn_Click"
+                        Content="📊 Анализ данных"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="SaveToDbBtn"
+                        Padding="10,5"
                         Background="#2980B9"
                         Click="SaveToDbBtn_Click"
                         Content="💾 Сохранить в БД"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
-
                     <Button
                         x:Name="ExportBtn"
+                        Padding="10,5"
                         Background="#F39C12"
                         Click="ExportBtn_Click"
-                        Content="📤 Импорт из БД"
+                        Content="📥 Загрузить из БД"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Style="{StaticResource ActionButtonStyle}" />
+                </StackPanel>
+
+                <StackPanel Margin="0,0,15,0" Orientation="Horizontal">
+                    <Button
+                        x:Name="ToJsonBtn"
+                        Padding="10,5"
+                        Background="Chocolate"
+                        Click="ToJsonBtn_Click"
+                        Content="📄 Экспорт в JSON"
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                     <Button
                         x:Name="ExportJsonBtn"
+                        Padding="10,5"
                         Background="IndianRed"
                         Click="ExportJsonBtn_Click"
-                        Content="📤 Импорт из JSON"
-                        IsEnabled="{Binding IsNotBusy}"
-                        Style="{StaticResource ActionButtonStyle}" />
-                    <Button
-                        x:Name="ToJsonBtn"
-                        Background="Gold"
-                        Click="ToJsonBtn_Click"
-                        Content="📄 Сохранить в JSON"
-                        Foreground="#2C3E50"
-                        IsEnabled="{Binding IsNotBusy}"
-                        Style="{StaticResource ActionButtonStyle}" />
-                    <Button
-                        x:Name="ClearResultsBtn"
-                        Background="#E74C3C"
-                        Click="ClearResultsBtn_Click"
-                        Content="🗑️ Очистить результат"
+                        Content="📥 Импорт из JSON "
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource ActionButtonStyle}" />
                 </StackPanel>
+
+                <Button
+                    x:Name="ClearResultsBtn"
+                    Padding="10,5"
+                    Background="#E74C3C"
+                    Click="ClearResultsBtn_Click"
+                    Content="🗑️ Очистить"
+                    IsEnabled="{Binding IsNotBusy}"
+                    Style="{StaticResource ActionButtonStyle}" />
             </StackPanel>
         </Border>
 
