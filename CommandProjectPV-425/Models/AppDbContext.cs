@@ -14,8 +14,9 @@ namespace CommandProjectPV_425.Models
         {
             try
             {
-                // Текущая директория проекта (рабочая директория)
-                var projectFolder = Environment.CurrentDirectory;
+
+                // проблема сохранения в bin здесь
+                var projectFolder = Environment.CurrentDirectory;                 // Текущая директория проекта (рабочая директория)
                 var databaseFolder = Path.Combine(projectFolder, "DataBase");
 
                 if (!Directory.Exists(databaseFolder))
@@ -39,7 +40,6 @@ namespace CommandProjectPV_425.Models
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Processor).HasMaxLength(200);
-                entity.Property(e => e.OperatingSystem).HasMaxLength(100);
                 entity.Property(e => e.MethodName).HasMaxLength(150);
                 entity.Property(e => e.TaskType).HasMaxLength(150);
                 entity.Property(e => e.ExecutionTime).HasMaxLength(50);

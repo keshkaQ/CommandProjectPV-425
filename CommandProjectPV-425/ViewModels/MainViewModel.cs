@@ -4,6 +4,7 @@ using CommandProjectPV_425.Views;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -39,13 +40,6 @@ namespace CommandProjectPV_425.ViewModels
         {
             get => _statusText;
             set { _statusText = value; OnPropertyChanged(); }
-        }
-
-        private double _progressValue;
-        public double ProgressValue
-        {
-            get => _progressValue;
-            set { _progressValue = value; OnPropertyChanged(); }
         }
 
         // флаг для блокировки кнопок
@@ -103,7 +97,6 @@ namespace CommandProjectPV_425.ViewModels
                 IsBusy = true;
                 HideError();
                 StatusText = "Запуск тестов. Немного подождите...";
-                ProgressValue = 0;
 
                 // Добавление списока всех задач
                 var allTasks = new[]
@@ -132,12 +125,21 @@ namespace CommandProjectPV_425.ViewModels
 
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            foreach (var result in results)
+                            var sortedResults = Results.OrderBy(r =>
+                            {
+                                var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                                if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                                    return timeMs;
+                                return double.MaxValue;
+                            }).ToList();
+
+                            Results.Clear();
+                            foreach (var result in sortedResults)
                                 Results.Add(result);
                         });
 
+
                         completed++;
-                        ProgressValue = (double)completed / total * 100;
                     }
 
                     ShowSuccess("Тестирование завершено! Все задачи успешно выполнены.");
@@ -146,15 +148,23 @@ namespace CommandProjectPV_425.ViewModels
                 {
                     var results = await _benchmarkService.RunBenchmarkAsync(taskType, size);
 
+                    // Сортировка результатов для одиночной задачи
+                    var sortedResults = results.OrderBy(r =>
+                    {
+                        var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                        if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                            return timeMs;
+                        return double.MaxValue;
+                    }).ToList();
+
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         Results.Clear();
-                        foreach (var result in results)
+                        foreach (var result in sortedResults)
                             Results.Add(result);
                     });
 
-                    ShowSuccess($"Тестирование завершено! Протестировано {results.Count} методов.");
-                    ProgressValue = 100;
+                    ShowSuccess($"Тестирование завершено! Протестировано {sortedResults.Count} методов.");
                 }
             }
             catch (Exception ex)
@@ -346,7 +356,6 @@ namespace CommandProjectPV_425.ViewModels
             if (IsBusy) return;
 
             Results.Clear();
-            ProgressValue = 0;
             HideError();
             StatusText = "Готов к тестированию...";
         }

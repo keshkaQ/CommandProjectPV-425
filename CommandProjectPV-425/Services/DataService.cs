@@ -27,11 +27,17 @@ namespace CommandProjectPV_425.Services
 
         public async Task<List<BenchmarkResult>> LoadResultsFromDatabaseAsync()
         {
-            // создаем контекст базы данных
             using var context = new AppDbContext();
 
-            // загружаем все результаты из БД, предварительно отсортированные
-            return await context.BenchmarkResults.OrderByDescending(r => r.Speedup).ToListAsync();
+            var results = await context.BenchmarkResults.ToListAsync();
+
+            return results.OrderBy(r =>
+            {
+                var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                    return timeMs;
+                return double.MaxValue;
+            }).ToList();
         }
 
         public async Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results)
@@ -53,7 +59,6 @@ namespace CommandProjectPV_425.Services
             {
                 r.Processor,
                 r.CoreCount,
-                r.OperatingSystem,
                 r.TaskType,
                 r.DataSize,
                 r.MethodName,
@@ -89,7 +94,13 @@ namespace CommandProjectPV_425.Services
                     Converters = { new DateTimeConverter() }
                 };
                 var results = JsonSerializer.Deserialize<List<BenchmarkResult>>(json, options);
-                return results ?? new List<BenchmarkResult>();
+                return results.OrderBy(r =>
+                {
+                    var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                    if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                        return timeMs;
+                    return double.MaxValue;
+                }).ToList()?? new List<BenchmarkResult>();
             }
             catch (JsonException ex)
             {
@@ -103,7 +114,7 @@ namespace CommandProjectPV_425.Services
 
         public async Task<List<MethodStatistic>> GetAverageTimePerMethodAsync()
         {
-            using var context = new AppDbContext(); // Замените на ваш контекст БД
+            using var context = new AppDbContext();
 
             // 1. Загружаем все результаты
             var allResults = await context.BenchmarkResults.ToListAsync();
