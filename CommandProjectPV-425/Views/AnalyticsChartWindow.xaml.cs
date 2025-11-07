@@ -12,6 +12,9 @@ public partial class AnalyticsChartWindow : Window
 
         _viewModel = new AnalyticsChartViewModel();
         DataContext = _viewModel;
+
+        // Инициализируем асинхронно после загрузки окна
+        Loaded += async (s, e) => await _viewModel.InitializeAsync();
     }
 
     public async Task UpdateChartsAsync()

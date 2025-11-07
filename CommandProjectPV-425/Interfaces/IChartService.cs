@@ -1,4 +1,5 @@
 ﻿using CommandProjectPV_425.Models;
+using CommandProjectPV_425.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 
@@ -22,5 +23,7 @@ namespace CommandProjectPV_425.Interfaces
             string yName,
             List<double> values,
             Func<double, string> yLabelFormatter);
+
+        List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results);
     }
 }

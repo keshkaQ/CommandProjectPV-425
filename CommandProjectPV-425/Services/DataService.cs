@@ -70,44 +70,14 @@ public class DataService : IDataService
         await File.WriteAllTextAsync(filePath, json);
     }
 
-    public async Task<List<MethodStatistic>> GetAverageTimePerMethodAsync()
+    public async Task<List<int>> GetCoreCounts()
     {
-        using var context = new AppDbContext(); // Замените на ваш контекст БД
+        using var context = new AppDbContext();
 
-        // 1. Загружаем все результаты
-        var allResults = await context.BenchmarkResults.ToListAsync();
-
-        // 2. Группируем по имени метода и рассчитываем среднее время
-        var statistics = allResults
-            .GroupBy(r => r.MethodName)
-            .Select(g =>
-            {
-                // Берем среднее значение из всех ExecutionTime, конвертируя их из строки в double (мс)
-                var validResults = g.Where(r => r.ExecutionTime != "Failed");
-
-                // ВАЖНО: ParseTimeToMs должен возвращать double (мс)
-                var averageTime = validResults.Any()
-                    ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
-                    : 0.0;
-
-                return new MethodStatistic
-                {
-                    MethodName = g.Key,
-                    AverageTimeMs = averageTime,
-                    AverageSpeedup = 0.0
-                };
-            })
-            .Where(s => s.AverageTimeMs > 0) // Удаляем методы, у которых нет успешных результатов
-            .OrderBy(s => s.AverageTimeMs)
-            .ToList();
-
-        return statistics;
+        return await context.BenchmarkResults
+            .Select(r => r.CoreCount) // Выбираем только значения CoreCount
+            .Distinct()              // Убираем дубликаты, оставляя только уникальные
+            .OrderBy(count => count) // Сортируем по возрастанию (по желанию)
+            .ToListAsync();
     }
-}
-
-public class MethodStatistic
-{
-    public string MethodName { get; set; }
-    public double AverageTimeMs { get; set; }
-    public double AverageSpeedup { get; set; }
 }

@@ -161,5 +161,38 @@ namespace CommandProjectPV_425.Services
 
             return (xAxes, yAxes);
         }
+
+        public List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results)
+        {
+            var statistics = results
+                .GroupBy(r => r.MethodName)
+                .Select(g =>
+                {
+                    var validResults = g.Where(r => r.ExecutionTime != "Failed");
+
+                    var averageTime = validResults.Any()
+                        ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
+                        : 0.0;
+
+                    return new MethodStatistic
+                    {
+                        MethodName = g.Key,
+                        AverageTimeMs = averageTime,
+                        AverageSpeedup = 0.0
+                    };
+                })
+                .Where(s => s.AverageTimeMs > 0)
+                .OrderBy(s => s.AverageTimeMs)
+                .ToList();
+
+            return statistics;
+        }
     }
+}
+
+public class MethodStatistic
+{
+    public string MethodName { get; set; }
+    public double AverageTimeMs { get; set; }
+    public double AverageSpeedup { get; set; }
 }

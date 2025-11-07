@@ -93,8 +93,9 @@ public class ChartViewModel : BaseViewModel
     {
         try
         {
+            var allResults = await _dataService.LoadResultsFromDatabaseAsync();
             // 1. Получение данных из БД
-            var stats = await _dataService.GetAverageTimePerMethodAsync();
+            var stats = _chartService.CalculateAverageTimePerMethod(allResults);
 
             // 2. Построение графика
             UpdateMethodsStatsChart(stats);
