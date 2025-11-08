@@ -66,11 +66,7 @@ namespace CommandProjectPV_425.Services
             {
                 foreach (var result in successfulResults)
                 {
-                    // сокращаем имя метода и задачи
                     var task = result.TaskType;
-                    //var task = result.TaskType.Length > 15 ?
-                    //    result.TaskType.Substring(0, 15) + "..." 
-                    //    : result.TaskType;
                     var method = result.MethodName;
 
                     // конвертируем строковое время и ускорение в миллисекунды
@@ -182,7 +178,7 @@ namespace CommandProjectPV_425.Services
                     };
                 })
                 .Where(s => s.AverageTimeMs > 0)
-                .OrderBy(s => s.AverageTimeMs)
+                //.OrderBy(s => s.AverageTimeMs)
                 .ToList();
 
             return statistics;

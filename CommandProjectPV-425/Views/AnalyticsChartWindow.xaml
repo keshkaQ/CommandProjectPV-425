@@ -34,6 +34,15 @@
                 DisplayMemberPath="DisplayName"
                 ItemsSource="{Binding CoreCount}"
                 SelectedItem="{Binding SelectedCoreCount, Mode=TwoWay}" />
+
+            <TextBlock Text="Задача: " Margin="10 0 0 0"/>
+            <ComboBox
+                Name="TaskNameComboBox"
+                Width="210"
+                Margin="5,0,0,0"
+                VerticalAlignment="Center"
+                ItemsSource="{Binding TasksNames}"
+                SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
         </StackPanel>
 
 

@@ -80,4 +80,15 @@ public class DataService : IDataService
             .OrderBy(count => count) // Сортируем по возрастанию (по желанию)
             .ToListAsync();
     }
+
+    public async Task<List<string>> GetTasksNames()
+    {
+        using var context = new AppDbContext();
+
+        return await context.BenchmarkResults
+            .Select(n => n.TaskType)
+            .Distinct()
+            //.OrderBy(tsakType => tsakType)
+            .ToListAsync();
+    }
 }

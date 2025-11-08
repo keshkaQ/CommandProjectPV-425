@@ -1,5 +1,4 @@
 ﻿using CommandProjectPV_425.Interfaces;
-using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Services;
 using CommandProjectPV_425.ViewModels.Base;
 using LiveChartsCore;
@@ -20,6 +19,7 @@ public class AnalyticsChartViewModel : BaseViewModel
     public Axis[] TimeStatysticsYAxes { get; private set; }
 
     public ObservableCollection<CoreCountOption> CoreCount { get; private set; }
+    public ObservableCollection<string> TasksNames { get; private set; }
 
     private CoreCountOption? _selectedCoreCount; // nullable, чтобы можно было выбрать "Все ядра"
     public CoreCountOption? SelectedCoreCount
@@ -37,11 +37,27 @@ public class AnalyticsChartViewModel : BaseViewModel
         }
     }
 
+    private string _selectedTaskName;
+    public string SelectedTaskName
+    {
+        get => _selectedTaskName;
+        set
+        {
+            if (_selectedTaskName != value)
+            {
+                _selectedTaskName = value;
+                OnPropertyChanged();
+                _ = UpdateChartAsync();
+            }
+        }
+    }
+
     public AnalyticsChartViewModel(IChartService chartService, IDataService dataService)
     {
         _chartService = chartService;
         _dataService = dataService;
-        CoreCount = new ObservableCollection<CoreCountOption>();
+        CoreCount = [];
+        TasksNames = [];
     }
 
     public AnalyticsChartViewModel() : this(new ChartService(), new DataService())
@@ -50,23 +66,33 @@ public class AnalyticsChartViewModel : BaseViewModel
 
     public async Task InitializeAsync()
     {
-        await LoadCoreCountsAsync();
-        // Устанавливаем "null" (все ядра) по умолчанию
-        SelectedCoreCount = null;
+        await LoadDataAsync();
+        SelectedCoreCount = CoreCount[0];
+        SelectedTaskName = TasksNames[0];
+
         await UpdateChartAsync();
     }
 
-    private async Task LoadCoreCountsAsync()
+    private async Task LoadDataAsync()
     {
         CoreCount.Clear();
+        TasksNames.Clear();
 
         // Добавляем пункт "Все ядра"
         CoreCount.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
+        TasksNames.Add("Все задачи");
 
         var dbCoreCounts = await _dataService.GetCoreCounts();
+        var dbTasksNames = await _dataService.GetTasksNames();
+
         foreach (var count in dbCoreCounts)
         {
             CoreCount.Add(new CoreCountOption { Value = count, DisplayName = $"{count}" });
+        }
+
+        foreach (var taskName in dbTasksNames)
+        {
+            TasksNames.Add(taskName);
         }
     }
 
@@ -79,11 +105,22 @@ public class AnalyticsChartViewModel : BaseViewModel
             // Загружаем все результаты из БД
             var allResults = await _dataService.LoadResultsFromDatabaseAsync();
 
-            // Фильтруем по выбранному количеству ядер, если оно выбрано
+            // Фильтруем
             var filteredResults = allResults;
-            if (SelectedCoreCount != null && SelectedCoreCount.Value != -1)
+            if (SelectedCoreCount != null && SelectedCoreCount.Value != -1 &&
+                SelectedTaskName != "Все задачи" && SelectedTaskName != null)
             {
-                filteredResults = allResults.Where(r => r.CoreCount == SelectedCoreCount.Value).ToList();
+                filteredResults = allResults
+                    .Where(r => r.CoreCount == SelectedCoreCount.Value && r.TaskType == SelectedTaskName)
+                    .ToList();
+            }
+            else if (SelectedCoreCount != null && SelectedCoreCount.Value != -1)
+            {
+                filteredResults = allResults.Where(c => c.CoreCount == SelectedCoreCount.Value).ToList();
+            }
+            else if(SelectedTaskName != "Все задачи" && SelectedTaskName != null)
+            {
+                filteredResults = allResults.Where(t => t.TaskType == SelectedTaskName).ToList();
             }
 
             // Вычисляем статистику на основе отфильтрованных результатов
@@ -142,6 +179,9 @@ public class AnalyticsChartViewModel : BaseViewModel
         OnPropertyChanged(nameof(TimeStatysticsYAxes));
         OnPropertyChanged(nameof(CoreCount));
         OnPropertyChanged(nameof(SelectedCoreCount));
+        OnPropertyChanged(nameof(TasksNames));
+        OnPropertyChanged(nameof(SelectedTaskName));
+
     }
 }
 
