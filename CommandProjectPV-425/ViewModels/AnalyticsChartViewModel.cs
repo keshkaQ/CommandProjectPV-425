@@ -1,4 +1,5 @@
-﻿using CommandProjectPV_425.Interfaces;
+﻿using CommandProjectPV_425.Helpers;
+using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Services;
 using CommandProjectPV_425.ViewModels.Base;
 using LiveChartsCore;
@@ -84,11 +85,14 @@ public class AnalyticsChartViewModel : BaseViewModel
     public async Task InitializeAsync()
     {
         await LoadDataAsync();
-        SelectedCoreCount = CoreCount[0];
-        SelectedTaskName = TasksNames[0];
-        SelectedDataSize = DataSizes[0];
+        SelectedCoreCount = CoreCount.FirstOrDefault();
+        SelectedTaskName = TasksNames.FirstOrDefault();
+        SelectedDataSize = DataSizes.FirstOrDefault();
 
-        await UpdateChartAsync();
+        if (SelectedCoreCount != null && SelectedTaskName != null && SelectedDataSize != null)
+        {
+            await UpdateChartAsync();
+        }
     }
 
     private async Task LoadDataAsync()
@@ -97,11 +101,12 @@ public class AnalyticsChartViewModel : BaseViewModel
         TasksNames.Clear();
         DataSizes.Clear();
 
-        // Добавляем пункт "Все ядра"
+        // Базовые значения "все"
         CoreCount.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
         TasksNames.Add("Все задачи");
         DataSizes.Add(new DataSizeOption { Value = -1, DisplayName = "Все размеры" });
 
+        // Загружаем уникальные значения из БД
         var dbCoreCounts = await _dataService.GetCoreCounts();
         var dbTasksNames = await _dataService.GetTasksNames();
         var dbDataSizes = await _dataService.GetDataSizes();
@@ -132,59 +137,21 @@ public class AnalyticsChartViewModel : BaseViewModel
             var allResults = await _dataService.LoadResultsFromDatabaseAsync();
 
             var filteredResults = allResults;
+
             // Фильтруем
-            // если все фильтры изменены
-            if (SelectedCoreCount != null && SelectedCoreCount.Value != -1 &&
-                SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
-                SelectedDataSize != null && SelectedDataSize.Value != -1)
+            if (SelectedCoreCount != null && SelectedCoreCount.Value != -1)
             {
-                filteredResults = allResults
-                    .Where(r => r.CoreCount == SelectedCoreCount.Value &&
-                            r.TaskType == SelectedTaskName &&
-                            r.DataSize == SelectedDataSize.Value)
-                    .ToList();
+                filteredResults = filteredResults.Where(c => c.CoreCount == SelectedCoreCount.Value).ToList();
             }
-            // если изменен только SelectedCoreCount
-            else if (SelectedCoreCount != null && SelectedCoreCount.Value != -1)
+
+            if (SelectedTaskName != "Все задачи" && SelectedTaskName != null)
             {
-                filteredResults = allResults.Where(c => c.CoreCount == SelectedCoreCount.Value).ToList();
+                filteredResults = filteredResults.Where(t => t.TaskType == SelectedTaskName).ToList();
             }
-            // если изменен только SelectedTaskName
-            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null)
+
+            if (SelectedDataSize != null && SelectedDataSize.Value != -1)
             {
-                filteredResults = allResults.Where(t => t.TaskType == SelectedTaskName).ToList();
-            }
-            // если изменен только SelectedDataSize
-            else if (SelectedDataSize != null && SelectedDataSize.Value != -1)
-            {
-                filteredResults = allResults.Where(d => d.DataSize == SelectedDataSize.Value).ToList();
-            }
-            // если изменены SelectedDataSize и SelectedCoreCount
-            else if (SelectedCoreCount != null && SelectedCoreCount.Value != -1 &&
-                    SelectedDataSize != null && SelectedDataSize.Value != -1)
-            {
-                filteredResults = allResults
-                    .Where(cd => cd.CoreCount == SelectedCoreCount.Value &&
-                            cd.DataSize == SelectedDataSize.Value)
-                    .ToList();
-            }
-            // если изменены SelectedDataSize и SelectedTaskName
-            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
-                    SelectedDataSize != null && SelectedDataSize.Value != -1)
-            {
-                filteredResults = allResults
-                    .Where(td => td.TaskType == SelectedTaskName &&
-                            td.DataSize == SelectedDataSize.Value)
-                    .ToList();
-            }
-            // если изменены SelectedCoreCount и SelectedTaskName
-            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
-                    SelectedCoreCount != null && SelectedCoreCount.Value != -1)
-            {
-                filteredResults = allResults
-                    .Where(ct => ct.TaskType == SelectedTaskName &&
-                            ct.CoreCount == SelectedCoreCount.Value)
-                    .ToList();
+                filteredResults = filteredResults.Where(d => d.DataSize == SelectedDataSize.Value).ToList();
             }
 
             // Вычисляем статистику на основе отфильтрованных результатов
@@ -255,18 +222,6 @@ public class AnalyticsChartViewModel : BaseViewModel
     }
 }
 
-public class CoreCountOption
-{
-    public int Value { get; set; }
-    public string DisplayName { get; set; }
+public class CoreCountOption : BaseDataOption { }
 
-    public override string ToString() => DisplayName; // для отображения в ComboBox
-}
-
-public class DataSizeOption
-{
-    public int Value { get; set; }
-    public string DisplayName { get; set; }
-
-    public override string ToString() => DisplayName; // для отображения в ComboBox
-}
+public class DataSizeOption : BaseDataOption { }

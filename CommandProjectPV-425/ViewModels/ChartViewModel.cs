@@ -15,14 +15,11 @@ public class ChartViewModel : BaseViewModel
 
     public ISeries[] TimeSeries { get; private set; }
     public ISeries[] SpeedupSeries { get; private set; }
-    public ISeries[] MethodStatsSeries { get; private set; }
 
     public Axis[] TimeXAxes { get; private set; }
     public Axis[] TimeYAxes { get; private set; }
     public Axis[] SpeedupXAxes { get; private set; }
     public Axis[] SpeedupYAxes { get; private set; }
-    public Axis[] MethodStatsXAxes { get; private set; }
-    public Axis[] MethodStatsYAxes { get; private set; }
 
     private string _title;
     public string Title
@@ -49,15 +46,10 @@ public class ChartViewModel : BaseViewModel
         TimeSeries = Array.Empty<ISeries>();
         SpeedupSeries = Array.Empty<ISeries>();
 
-        MethodStatsSeries = Array.Empty<ISeries>();
-
         TimeXAxes = Array.Empty<Axis>();
         TimeYAxes = Array.Empty<Axis>();
         SpeedupXAxes = Array.Empty<Axis>();
         SpeedupYAxes = Array.Empty<Axis>();
-
-        MethodStatsXAxes = Array.Empty<Axis>();
-        MethodStatsYAxes = Array.Empty<Axis>();
     }
 
     public void UpdateCharts(List<string> labels, List<double> timeValues, List<double> speedupValues)
@@ -87,54 +79,6 @@ public class ChartViewModel : BaseViewModel
 
         var (labels, timeValues, speedupValues) = _chartService.PrepareChartData(results);
         UpdateCharts(labels, timeValues, speedupValues);
-    }
-
-    public async Task LoadMethodStatisticsAsync()
-    {
-        try
-        {
-            var allResults = await _dataService.LoadResultsFromDatabaseAsync();
-            // 1. Получение данных из БД
-            var stats = _chartService.CalculateAverageTimePerMethod(allResults);
-
-            // 2. Построение графика
-            UpdateMethodsStatsChart(stats);
-        }
-        catch (Exception ex)
-        {
-            // Обработка ошибки загрузки данных
-            MessageBox.Show($"Ошибка при загрузке статистики методов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            // Очистка графика при ошибке
-            MethodStatsSeries = Array.Empty<ISeries>();
-            OnPropertyChanged(nameof(MethodStatsSeries));
-        }
-    }
-
-    public void UpdateMethodsStatsChart(List<MethodStatistic> stats)
-    {
-        if (stats == null || stats.Count == 0)
-        {
-            MethodStatsSeries = Array.Empty<ISeries>();
-            MethodStatsXAxes = Array.Empty<Axis>();
-            MethodStatsYAxes = Array.Empty<Axis>();
-            OnPropertyChanged(nameof(MethodStatsSeries));
-            return;
-        }
-
-        var seriesList = new List<ISeries>();
-        var values = stats.Select(s => s.AverageTimeMs).ToList();
-        var labels = stats.Select(s => s.MethodName).ToList();
-
-        (MethodStatsSeries, MethodStatsXAxes, MethodStatsYAxes) = _chartService.CreateColumnChart(
-            labels,
-            values,
-            "Методы",
-            "Среднее время выполнения",
-            Helpers.TimeFormatter.FormatTimeShort,
-            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}"
-        );
-
-        NotifyAllChartPropertiesChanged();
     }
 
     private void UpdateTimeChart(List<string> labels, List<double> values)
@@ -175,9 +119,5 @@ public class ChartViewModel : BaseViewModel
         OnPropertyChanged(nameof(TimeYAxes));
         OnPropertyChanged(nameof(SpeedupXAxes));
         OnPropertyChanged(nameof(SpeedupYAxes));
-
-        OnPropertyChanged(nameof(MethodStatsSeries));
-        OnPropertyChanged(nameof(MethodStatsXAxes));
-        OnPropertyChanged(nameof(MethodStatsYAxes));
     }
 }
