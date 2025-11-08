@@ -87,10 +87,11 @@ namespace CommandProjectPV_425.ViewModels
             StatusText = message;
             HideError();
         }
-
         public async Task RunBenchmarkAsync(string taskType, int size)
         {
             if (IsBusy) return;
+            var res = MessageBox.Show("Продолжительность тестов занимает больше 5 минут. Вы готовы подождать?", "Внимание!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (res == MessageBoxResult.No) return;
 
             try
             {
@@ -98,7 +99,7 @@ namespace CommandProjectPV_425.ViewModels
                 HideError();
                 StatusText = "Запуск тестов. Немного подождите...";
 
-                // Добавление списока всех задач
+                // Добавление списка всех задач
                 var allTasks = new[]
                 {
                     "Count Numbers Above Average",
@@ -111,7 +112,10 @@ namespace CommandProjectPV_425.ViewModels
                 // Проверка выбран ли пункт все задачи
                 bool runAllTasks = taskType == "All Tasks";
 
-                Results.Clear();
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Results.Clear();
+                });
 
                 if (runAllTasks)
                 {
@@ -120,27 +124,28 @@ namespace CommandProjectPV_425.ViewModels
 
                     foreach (var currentTask in allTasks)
                     {
-                        StatusText = $"Выполняется: {currentTask}...";
+                        StatusText = $"Выполняется: {currentTask}... ({completed + 1}/{total})";
+
                         var results = await _benchmarkService.RunBenchmarkAsync(currentTask, size);
 
+                        // Добавляем результаты каждой задачи по мере выполнения
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            var sortedResults = Results.OrderBy(r =>
-                            {
-                                var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
-                                if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
-                                    return timeMs;
-                                return double.MaxValue;
-                            }).ToList();
-
-                            Results.Clear();
-                            foreach (var result in sortedResults)
+                            foreach (var result in results)
                                 Results.Add(result);
                         });
 
-
                         completed++;
                     }
+
+                    // Сортировка всех результатов после завершения всех задач
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        var sortedResults = Results.OrderBy(r => ParseExecutionTime(r.ExecutionTime)).ToList();
+                        Results.Clear();
+                        foreach (var result in sortedResults)
+                            Results.Add(result);
+                    });
 
                     ShowSuccess("Тестирование завершено! Все задачи успешно выполнены.");
                 }
@@ -149,13 +154,7 @@ namespace CommandProjectPV_425.ViewModels
                     var results = await _benchmarkService.RunBenchmarkAsync(taskType, size);
 
                     // Сортировка результатов для одиночной задачи
-                    var sortedResults = results.OrderBy(r =>
-                    {
-                        var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
-                        if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
-                            return timeMs;
-                        return double.MaxValue;
-                    }).ToList();
+                    var sortedResults = results.OrderBy(r => ParseExecutionTime(r.ExecutionTime)).ToList();
 
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -175,6 +174,15 @@ namespace CommandProjectPV_425.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        // Вспомогательный метод для парсинга времени выполнения
+        private double ParseExecutionTime(string executionTime)
+        {
+            var timeStr = executionTime.Replace(" ms", "").Replace(",", ".");
+            if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                return timeMs;
+            return double.MaxValue;
         }
 
         public async Task SaveToDatabaseAsync()

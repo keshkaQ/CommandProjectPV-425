@@ -14,9 +14,17 @@ namespace CommandProjectPV_425.Models
         {
             try
             {
+                // получаем базовую директорию
+                var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-                // проблема сохранения в bin здесь
-                var projectFolder = Environment.CurrentDirectory;                 // Текущая директория проекта (рабочая директория)
+                // Поднимаемся на уровни вверх к корню проекта
+                var projectFolder = Directory.GetParent(baseDirectory)?.Parent?.Parent?.Parent?.FullName;
+
+                if (string.IsNullOrEmpty(projectFolder) || !Directory.Exists(projectFolder))
+                {
+                    throw new DirectoryNotFoundException("Не удалось найти корневую папку проекта");
+                }
+
                 var databaseFolder = Path.Combine(projectFolder, "DataBase");
 
                 if (!Directory.Exists(databaseFolder))

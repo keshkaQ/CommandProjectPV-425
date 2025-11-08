@@ -42,8 +42,19 @@ namespace CommandProjectPV_425.Services
 
         public async Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results)
         {
+            // получаем базовую директорию
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            // Поднимаемся на уровни вверх к корню проекта
+            var projectFolder = Directory.GetParent(baseDirectory)?.Parent?.Parent?.Parent?.FullName;
+
+            if (string.IsNullOrEmpty(projectFolder) || !Directory.Exists(projectFolder))
+            {
+                throw new DirectoryNotFoundException("Не удалось найти корневую папку проекта");
+            }
+
             // путь к папке для сохранения результатов
-            string directoryPath = "BenchmarkResults";
+            string directoryPath = Path.Combine(projectFolder,"BenchmarkResults");
 
             // создаем папку, если она не существует
             if (!Directory.Exists(directoryPath))
@@ -127,7 +138,6 @@ namespace CommandProjectPV_425.Services
                     // Берем среднее значение из всех ExecutionTime, конвертируя их из строки в double (мс)
                     var validResults = g.Where(r => r.ExecutionTime != "Failed");
 
-                    // ВАЖНО: ParseTimeToMs должен возвращать double (мс)
                     var averageTime = validResults.Any()
                         ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
                         : 0.0;

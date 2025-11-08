@@ -11,7 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="DataBase\benchmark.db" />
+    <Compile Remove="DataBase\**" />
+    <EmbeddedResource Remove="DataBase\**" />
+    <None Remove="DataBase\**" />
+    <Page Remove="DataBase\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Images\result_logo_top_v2.jpeg" />
     <None Remove="Images\result_logo_v2.png" />
     <None Remove="Images\Иконка.ico" />
@@ -32,9 +38,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Resource Include="DataBase\benchmark.db">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="Images\result_logo_top_v2.jpeg">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Resource>
