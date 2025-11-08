@@ -85,7 +85,8 @@ namespace CommandProjectPV_425.Services
             string xAxisName,
             string yAxisName,
             Func<double, string> yLabelFormatter,
-            Func<int, double, string> tooltipFormatter)
+            Func<int, double, string> tooltipFormatter,
+            bool isSpeedupChart = false)
         {
             var seriesList = new List<ISeries>();
 
@@ -113,47 +114,119 @@ namespace CommandProjectPV_425.Services
                 seriesList.Add(series);
             }
 
-            var (xAxes, yAxes) = CreateAxes(xAxisName, yAxisName, values, yLabelFormatter);
+            var (xAxes, yAxes) = CreateAxes(xAxisName, yAxisName, values, yLabelFormatter, isSpeedupChart);
             return (seriesList.ToArray(), xAxes, yAxes);
         }
+
+        //public (Axis[] X, Axis[] Y) CreateAxes(
+        //    string xName,
+        //    string yName,
+        //    List<double> values,
+        //    Func<double, string> yLabelFormatter)
+        //{
+        //    // Автоматическое определение пределов оси Y
+        //    double minValue = values.Min();
+        //    double maxValue = values.Max();
+        //    double padding = (maxValue - minValue) * 0.1;
+
+        //    var xAxes = new[]
+        //    {
+        //    new Axis
+        //    {
+        //        // Установка Labeler в функцию, возвращающую пустую строку
+        //        Labeler = value => string.Empty,
+        //        Labels = null,
+        //        SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+        //        MinStep = 1,
+        //        Name = xName,
+        //        NamePaint = new SolidColorPaint(SKColors.Black)
+        //    }
+        //};
+
+        //    var yAxes = new[]
+        //    {
+        //    new Axis
+        //    {
+        //        Labeler = yLabelFormatter,
+        //        MinLimit =Math.Max(0, minValue - padding),
+        //        MaxLimit = maxValue + padding,
+        //        SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+        //        Name = yName,
+        //        NamePaint = new SolidColorPaint(SKColors.Black)
+        //    }
+        //};
+
+        //    return (xAxes, yAxes);
+        //}
 
         public (Axis[] X, Axis[] Y) CreateAxes(
             string xName,
             string yName,
             List<double> values,
-            Func<double, string> yLabelFormatter)
+            Func<double, string> yLabelFormatter,
+            bool isSpeedupChart = false) // ✅ Добавляем параметр для графика ускорения
         {
             // Автоматическое определение пределов оси Y
             double minValue = values.Min();
             double maxValue = values.Max();
             double padding = (maxValue - minValue) * 0.1;
 
+            // ✅ Для графика ускорения включаем 1.0 в диапазон и центрируем его
+            if (isSpeedupChart)
+            {
+                // 1. Включаем 1.0 (100%) в минимальное и максимальное значения
+                minValue = Math.Min(minValue, 1.0);
+                maxValue = Math.Max(maxValue, 1.0);
+
+                // 2. Определяем максимальное отклонение от 1.0
+                double maxDeviation = Math.Max(
+                    Math.Abs(maxValue - 1.0),
+                    Math.Abs(minValue - 1.0));
+
+                // 3. Устанавливаем симметричный диапазон относительно 1.0
+                // (с учетом небольшого отступа)
+                double symPadding = maxDeviation + Math.Abs(maxDeviation * 0.1);
+
+                minValue = 1.0 - symPadding;
+                maxValue = 1.0 + symPadding;
+
+                //minValue = Math.Max(0, minValue - padding);
+                //maxValue = maxValue + padding;
+
+            }
+            else
+            {
+                // Оригинальная логика для обычного графика (включает 0)
+                minValue = Math.Max(0, minValue - padding);
+                maxValue = maxValue + padding;
+            }
+
             var xAxes = new[]
             {
-            new Axis
-            {
-                // Установка Labeler в функцию, возвращающую пустую строку
-                Labeler = value => string.Empty,
-                Labels = null,
-                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                MinStep = 1,
-                Name = xName,
-                NamePaint = new SolidColorPaint(SKColors.Black)
-            }
-        };
+                new Axis
+                {
+                    // Установка Labeler в функцию, возвращающую пустую строку
+                    Labeler = value => string.Empty,
+                    Labels = null,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    MinStep = 1,
+                    Name = xName,
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
 
             var yAxes = new[]
             {
-            new Axis
-            {
-                Labeler = yLabelFormatter,
-                MinLimit =Math.Max(0, minValue - padding),
-                MaxLimit = maxValue + padding,
-                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                Name = yName,
-                NamePaint = new SolidColorPaint(SKColors.Black)
-            }
-        };
+                new Axis
+                {
+                    Labeler = yLabelFormatter,
+                    MinLimit = minValue,
+                    MaxLimit = maxValue,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    Name = yName,
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
 
             return (xAxes, yAxes);
         }

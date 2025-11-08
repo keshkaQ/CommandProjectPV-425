@@ -5,6 +5,7 @@ using BenchmarkDotNet.Running;
 using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Tests;
+using System.Globalization;
 
 namespace CommandProjectPV_425.Services
 {
@@ -67,6 +68,7 @@ namespace CommandProjectPV_425.Services
         private List<BenchmarkResult> ProcessBenchmarkSummary(Summary summary, string taskType, int dataSize)
         {
             var results = new List<BenchmarkResult>();
+
             // находим базовый метод [Benchmark(Baseline = true] для расчета ускорения
             var baselineReport = summary.Reports.FirstOrDefault(r => r.BenchmarkCase.Descriptor.Baseline);
             double baselineTimeNs = baselineReport?.ResultStatistics?.Mean ?? 0;
@@ -83,7 +85,12 @@ namespace CommandProjectPV_425.Services
                 var meanTimeNs = report.ResultStatistics?.Mean ?? 0;
 
                 // рассчитываем ускорение относительно базового метода
-                var speedup = baselineTimeNs > 0 ? baselineTimeNs / meanTimeNs : 0;
+                double speedup = 1.0;
+                if (baselineTimeNs > 0 && meanTimeNs > 0)
+                {
+                    speedup = baselineTimeNs / meanTimeNs;
+                }
+
                 var speedupFormatted = FormatSpeedup(speedup);
 
                 // создаем объект результата со всей информацией
@@ -91,7 +98,6 @@ namespace CommandProjectPV_425.Services
                 {
                     Processor = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "Неизвестно",
                     CoreCount = Environment.ProcessorCount,
-                    OperatingSystem = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
                     TaskType = taskType,
                     DataSize = dataSize,
                     MethodName = methodName,
@@ -102,8 +108,15 @@ namespace CommandProjectPV_425.Services
                 });
             }
 
-            return results;
+            return results.OrderBy(r =>
+            {
+                var timeStr = r.ExecutionTime.Replace(" ms", "").Replace(",", ".");
+                if (double.TryParse(timeStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double timeMs))
+                    return timeMs;
+                return double.MaxValue;
+            }).ToList();
         }
+
         // форматируем имена методов в названия для DataGrid
         public string FormatMethodName(string methodName)
         {
@@ -124,12 +137,27 @@ namespace CommandProjectPV_425.Services
         // форматируем числовое значение ускорения в строку с нужной точностью
         private string FormatSpeedup(double speedup)
         {
-            return speedup switch
+            double percentage = speedup * 100;
+
+            return percentage switch
             {
-                < 0.01 => speedup.ToString("F3") + "x",
-                < 0.1 => speedup.ToString("F3") + "x",
-                < 1 => speedup.ToString("F2") + "x",
-                _ => speedup.ToString("F2") + "x"
+                // Теперь пороговые значения увеличены на 100
+                // (текущий код: > 100 изменения)
+                > 200 => $"{percentage:F0}%",
+                // (текущий код: > 50 изменения)
+                > 150 => $"{percentage:F0}%",
+                // (текущий код: > 10 изменения)
+                > 110 => $"{percentage:F1}%",
+                // (текущий код: > 0 изменения)
+                > 100 => $"{percentage:F1}%",
+                // (текущий код: 0 изменения)
+                100 => "100%",
+                // (текущий код: > -10 изменения)
+                > 90 => $"{percentage:F1}%",
+                // (текущий код: > -50 изменения)
+                > 50 => $"{percentage:F1}%",
+                // (текущий код: <= -50 изменения)
+                _ => $"{percentage:F0}%"
             };
         }
     }

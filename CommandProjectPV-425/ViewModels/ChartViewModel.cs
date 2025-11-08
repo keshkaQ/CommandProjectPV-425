@@ -99,10 +99,27 @@ public class ChartViewModel : BaseViewModel
             labels,
             values,
             "Методы",
-            "Ускорение (x)",
-            v => v.ToString("0.##"),
-            (index, val) => $"{labels[index]}\n{val:0.##}x"
+            "Ускорение (%)",
+              v => $"{v:0.##}%", // Форматируем как проценты
+            (index, val) => $"{labels[index]}\n{FormatSpeedupTooltip(val)}",
+            true
         );
+    }
+
+    private string FormatSpeedupTooltip(double value)
+    {
+        if (value > 100)
+        {
+            return $"+{value:0.##}% ускорение";
+        }
+        else if (value < 100)
+        {
+            return $"{value:0.##}% замедление";
+        }
+        else
+        {
+            return "100% (без изменений)";
+        }
     }
 
     public void ClearCharts()

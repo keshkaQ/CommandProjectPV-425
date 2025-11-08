@@ -15,13 +15,21 @@ namespace CommandProjectPV_425.Interfaces
         string xAxisName,
         string yAxisName,
         Func<double, string> yLabelFormatter,
-        Func<int, double, string> tooltipFormatter);
+        Func<int, double, string> tooltipFormatter,
+        bool isSpeedupChart = false);
+
+        //(Axis[] X, Axis[] Y) CreateAxes(
+        //    string xName,
+        //    string yName,
+        //    List<double> values,
+        //    Func<double, string> yLabelFormatter);
 
         (Axis[] X, Axis[] Y) CreateAxes(
             string xName,
             string yName,
             List<double> values,
-            Func<double, string> yLabelFormatter);
+            Func<double, string> yLabelFormatter,
+            bool isSpeedupChart = false);
 
         List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results);
     }

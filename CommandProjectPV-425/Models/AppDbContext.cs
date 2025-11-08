@@ -40,7 +40,6 @@ namespace CommandProjectPV_425.Models
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Processor).HasMaxLength(200);
-                entity.Property(e => e.OperatingSystem).HasMaxLength(100);
                 entity.Property(e => e.MethodName).HasMaxLength(150);
                 entity.Property(e => e.TaskType).HasMaxLength(150);
                 entity.Property(e => e.ExecutionTime).HasMaxLength(50);
