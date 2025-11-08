@@ -70,36 +70,30 @@ public class DataService : IDataService
         await File.WriteAllTextAsync(filePath, json);
     }
 
-    public async Task<List<int>> GetCoreCounts()
+    public async Task<(List<int> coreCounts, List<string> taskNames, List<int> dataSizes)> LoadAnalyticsDataAsync()
     {
         using var context = new AppDbContext();
 
-        return await context.BenchmarkResults
+        var coreCountsTask = context.BenchmarkResults
             .Select(r => r.CoreCount) // Выбираем только значения CoreCount
             .Distinct()              // Убираем дубликаты, оставляя только уникальные
             .OrderBy(count => count) // Сортируем по возрастанию (по желанию)
             .ToListAsync();
-    }
 
-    public async Task<List<string>> GetTasksNames()
-    {
-        using var context = new AppDbContext();
-
-        return await context.BenchmarkResults
+        var taskNamesTask = context.BenchmarkResults
             .Select(n => n.TaskType)
             .Distinct()
             //.OrderBy(taskType => taskType)
             .ToListAsync();
-    }
 
-    public async Task<List<int>> GetDataSizes()
-    {
-        using var context = new AppDbContext();
-
-        return await context.BenchmarkResults
+        var dataSizesTask = context.BenchmarkResults
             .Select(n => n.DataSize)
             .Distinct()
             .OrderBy(dataSize => dataSize)
             .ToListAsync();
+
+        await Task.WhenAll(coreCountsTask, taskNamesTask, dataSizesTask);
+
+        return (await coreCountsTask, await taskNamesTask, await dataSizesTask);
     }
 }

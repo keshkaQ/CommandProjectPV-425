@@ -19,7 +19,7 @@ public class AnalyticsChartViewModel : BaseViewModel
     public Axis[] TimeStatysticsXAxes { get; private set; }
     public Axis[] TimeStatysticsYAxes { get; private set; }
 
-    public ObservableCollection<CoreCountOption> CoreCount { get; private set; }
+    public ObservableCollection<CoreCountOption> CoreCounts { get; private set; }
     public ObservableCollection<string> TasksNames { get; private set; }
     public ObservableCollection<DataSizeOption> DataSizes { get; private set; }
 
@@ -73,7 +73,7 @@ public class AnalyticsChartViewModel : BaseViewModel
     {
         _chartService = chartService;
         _dataService = dataService;
-        CoreCount = [];
+        CoreCounts = [];
         TasksNames = [];
         DataSizes = [];
     }
@@ -85,7 +85,7 @@ public class AnalyticsChartViewModel : BaseViewModel
     public async Task InitializeAsync()
     {
         await LoadDataAsync();
-        SelectedCoreCount = CoreCount.FirstOrDefault();
+        SelectedCoreCount = CoreCounts.FirstOrDefault();
         SelectedTaskName = TasksNames.FirstOrDefault();
         SelectedDataSize = DataSizes.FirstOrDefault();
 
@@ -97,23 +97,21 @@ public class AnalyticsChartViewModel : BaseViewModel
 
     private async Task LoadDataAsync()
     {
-        CoreCount.Clear();
+        CoreCounts.Clear();
         TasksNames.Clear();
         DataSizes.Clear();
 
         // Базовые значения "все"
-        CoreCount.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
+        CoreCounts.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
         TasksNames.Add("Все задачи");
         DataSizes.Add(new DataSizeOption { Value = -1, DisplayName = "Все размеры" });
 
         // Загружаем уникальные значения из БД
-        var dbCoreCounts = await _dataService.GetCoreCounts();
-        var dbTasksNames = await _dataService.GetTasksNames();
-        var dbDataSizes = await _dataService.GetDataSizes();
+        var (dbCoreCounts, dbTasksNames, dbDataSizes) = await _dataService.LoadAnalyticsDataAsync();
 
         foreach (var count in dbCoreCounts)
         {
-            CoreCount.Add(new CoreCountOption { Value = count, DisplayName = $"{count}" });
+            CoreCounts.Add(new CoreCountOption { Value = count, DisplayName = $"{count}" });
         }
 
         foreach (var taskName in dbTasksNames)
@@ -209,15 +207,6 @@ public class AnalyticsChartViewModel : BaseViewModel
         OnPropertyChanged(nameof(TimeStatysticsSeries));
         OnPropertyChanged(nameof(TimeStatysticsXAxes));
         OnPropertyChanged(nameof(TimeStatysticsYAxes));
-
-        OnPropertyChanged(nameof(CoreCount));
-        OnPropertyChanged(nameof(SelectedCoreCount));
-
-        OnPropertyChanged(nameof(TasksNames));
-        OnPropertyChanged(nameof(SelectedTaskName));
-
-        OnPropertyChanged(nameof(DataSizes));
-        OnPropertyChanged(nameof(SelectedDataSize));
 
     }
 }
