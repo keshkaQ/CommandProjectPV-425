@@ -14,45 +14,70 @@
     WindowState="Maximized"
     mc:Ignorable="d">
 
+    <Window.Resources>
+        <Style x:Key="BorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#BDC3C7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+    </Window.Resources>
+
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel
+        <Border
             Grid.Row="0"
-            Margin="10,5,0,0"
-            HorizontalAlignment="Left"
-            Orientation="Horizontal">
-            <TextBlock Text="Количество ядер: " />
-            <ComboBox
-                Name="CoreCountComboBox"
-                Width="100"
-                Margin="5,0,0,0"
-                VerticalAlignment="Center"
-                DisplayMemberPath="DisplayName"
-                ItemsSource="{Binding CoreCounts}"
-                SelectedItem="{Binding SelectedCoreCount, Mode=TwoWay}" />
+            Margin="10"
+            Style="{StaticResource BorderStyle}">
 
-            <TextBlock Text="Задача: " Margin="10 0 0 0"/>
-            <ComboBox
-                Name="TaskNameComboBox"
-                Width="210"
-                Margin="5,0,0,0"
-                VerticalAlignment="Center"
-                ItemsSource="{Binding TasksNames}"
-                SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,12"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Foreground="#2C3E50"
+                    Text="Фильтр" />
 
-            <TextBlock Text="Размер входных данных: " Margin="10 0 0 0"/>
-            <ComboBox
-                Name="ArraySizeComboBox"
-                Width="100"
-                Margin="5,0,0,0"
-                VerticalAlignment="Center"
-                ItemsSource="{Binding DataSizes}"
-                SelectedItem="{Binding SelectedDataSize, Mode=TwoWay}" />
-        </StackPanel>
+                <StackPanel
+                    HorizontalAlignment="Left"
+                    Orientation="Horizontal">
+                    <TextBlock Text="Количество ядер: " />
+                    <ComboBox
+                        Name="CoreCountComboBox"
+                        Width="100"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        DisplayMemberPath="DisplayName"
+                        ItemsSource="{Binding CoreCounts}"
+                        SelectedItem="{Binding SelectedCoreCount, Mode=TwoWay}" />
+
+                    <TextBlock Margin="20,0,0,0" Text="Задача: " />
+                    <ComboBox
+                        Name="TaskNameComboBox"
+                        Width="210"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding TasksNames}"
+                        SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
+
+                    <TextBlock Margin="20,0,0,0" Text="Размер входных данных: " />
+                    <ComboBox
+                        Name="ArraySizeComboBox"
+                        Width="100"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding DataSizes}"
+                        SelectedItem="{Binding SelectedDataSize, Mode=TwoWay}" />
+                </StackPanel>
+            </StackPanel>
+
+        </Border>
 
 
         <lvc:CartesianChart
