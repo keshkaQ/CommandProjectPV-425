@@ -165,6 +165,20 @@
                     Height="50"
                     VerticalAlignment="Center"
                     Source="/Images/result_logo_top_v2.jpeg" />
+                <Button
+                    Grid.Column="1"
+                    Width="50"
+                    Height="50"
+                    Margin="890,0,0,0"
+                    Background="Transparent"
+                    BorderBrush="#8E44AD"
+                    Click="AboutBtn_Click"
+                    Content="❓"
+                    Cursor="Hand"
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Foreground="Crimson"
+                    ToolTip="О программе и команде разработчиков" />
             </Grid>
         </Border>
 
@@ -187,12 +201,41 @@
                         Width="250"
                         Margin="10,0,30,0"
                         Style="{StaticResource ComboBoxStyle}">
-                        <ComboBoxItem Content="Count Numbers Above Average" />
-                        <ComboBoxItem Content="Divisible Three or Five" />
-                        <ComboBoxItem Content="Find Prime Numbers" />
-                        <ComboBoxItem Content="Maximum Of Non Extreme Elements" />
-                        <ComboBoxItem Content="Max Frequency Of Elements" />
-                        <ComboBoxItem Content="All Tasks" />
+                        <ComboBoxItem Content="Count Numbers Above Average">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Подсчёт количества элементов, превышающих среднее значение массива" />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Content="Divisible Three or Five">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Подсчёт чисел, делящихся одновременно на 3 и 5" />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Content="Find Prime Numbers">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Подсчёт количества простых чисел в массиве" />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Content="Maximum Of Non Extreme Elements">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Поиск максимального значения среди элементов, не являющихся локальными экстремумами" />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Content="Max Frequency Of Elements">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Поиск максимальной частоты повторения любого элемента" />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Content="All Tasks">
+                            <ComboBoxItem.ToolTip>
+                                <ToolTip Content="Запускает тестирование всех задач последовательно." />
+                            </ComboBoxItem.ToolTip>
+                        </ComboBoxItem>
                     </ComboBox>
 
                     <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Размер входных данных:" />

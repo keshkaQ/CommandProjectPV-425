@@ -37,6 +37,13 @@ namespace CommandProjectPV_425.Views
         private void ShowAnalyticsBtn_Click(object sender, RoutedEventArgs e) =>  _viewModel.OpenStatistics();
         private void ClearResultsBtn_Click(object sender, RoutedEventArgs e) => _viewModel.ClearResults();
 
+        private void AboutBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var aboutWindow = new AboutWindow();
+            aboutWindow.Owner = this;
+            aboutWindow.ShowDialog();
+        }
+
         // метод для получение размера и типа задачи из combobox
         private (string typeTask, int size) GetTypeAndSizeTask()
         {

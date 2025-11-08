@@ -3,7 +3,6 @@ using CommandProjectPV_425.Models;
 using CommandProjectPV_425.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using System.Windows;
 
 namespace CommandProjectPV_425.ViewModels;
 
@@ -14,14 +13,11 @@ public class ChartViewModel : BaseViewModel
 
     public ISeries[] TimeSeries { get; private set; }
     public ISeries[] SpeedupSeries { get; private set; }
-    public ISeries[] MethodStatsSeries { get; private set; }
 
     public Axis[] TimeXAxes { get; private set; }
     public Axis[] TimeYAxes { get; private set; }
     public Axis[] SpeedupXAxes { get; private set; }
     public Axis[] SpeedupYAxes { get; private set; }
-    public Axis[] MethodStatsXAxes { get; private set; }
-    public Axis[] MethodStatsYAxes { get; private set; }
 
     private string _title;
     public string Title
@@ -48,15 +44,10 @@ public class ChartViewModel : BaseViewModel
         TimeSeries = Array.Empty<ISeries>();
         SpeedupSeries = Array.Empty<ISeries>();
 
-        MethodStatsSeries = Array.Empty<ISeries>();
-
         TimeXAxes = Array.Empty<Axis>();
         TimeYAxes = Array.Empty<Axis>();
         SpeedupXAxes = Array.Empty<Axis>();
         SpeedupYAxes = Array.Empty<Axis>();
-
-        MethodStatsXAxes = Array.Empty<Axis>();
-        MethodStatsYAxes = Array.Empty<Axis>();
     }
 
     public void UpdateCharts(List<string> labels, List<double> timeValues, List<double> speedupValues)
@@ -88,53 +79,6 @@ public class ChartViewModel : BaseViewModel
         UpdateCharts(labels, timeValues, speedupValues);
     }
 
-    public async Task LoadMethodStatisticsAsync()
-    {
-        try
-        {
-            // 1. Получение данных из БД
-            var stats = await _dataService.GetAverageTimePerMethodAsync();
-
-            // 2. Построение графика
-            UpdateMethodsStatsChart(stats);
-        }
-        catch (Exception ex)
-        {
-            // Обработка ошибки загрузки данных
-            MessageBox.Show($"Ошибка при загрузке статистики методов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            // Очистка графика при ошибке
-            MethodStatsSeries = Array.Empty<ISeries>();
-            OnPropertyChanged(nameof(MethodStatsSeries));
-        }
-    }
-
-    public void UpdateMethodsStatsChart(List<MethodStatistic> stats)
-    {
-        if (stats == null || stats.Count == 0)
-        {
-            MethodStatsSeries = Array.Empty<ISeries>();
-            MethodStatsXAxes = Array.Empty<Axis>();
-            MethodStatsYAxes = Array.Empty<Axis>();
-            OnPropertyChanged(nameof(MethodStatsSeries));
-            return;
-        }
-
-        var seriesList = new List<ISeries>();
-        var values = stats.Select(s => s.AverageTimeMs).ToList();
-        var labels = stats.Select(s => s.MethodName).ToList();
-
-        (MethodStatsSeries, MethodStatsXAxes, MethodStatsYAxes) = _chartService.CreateColumnChart(
-            labels,
-            values,
-            "Методы",
-            "Среднее время выполнения",
-            Helpers.TimeFormatter.FormatTimeShort,
-            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}", false
-        );
-
-        NotifyAllChartPropertiesChanged();
-    }
-
     private void UpdateTimeChart(List<string> labels, List<double> values)
     {
         (TimeSeries, TimeXAxes, TimeYAxes) = _chartService.CreateColumnChart(
@@ -143,7 +87,7 @@ public class ChartViewModel : BaseViewModel
             "Методы",
             "Время выполнения",
             Helpers.TimeFormatter.FormatTimeShort,
-            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}", false
+            (index, val) => $"{labels[index]}\n{Helpers.TimeFormatter.FormatTime(val)}"
         );
     }
 
@@ -155,20 +99,27 @@ public class ChartViewModel : BaseViewModel
             "Методы",
             "Ускорение (%)",
               v => $"{v:0.##}%", // Форматируем как проценты
-        (index, val) => $"{labels[index]}\n{FormatSpeedupTooltip(val)}",
-        true // ✅ Указываем, что это график ускорения
+            (index, val) => $"{labels[index]}\n{FormatSpeedupTooltip(val)}",
+            true
         );
     }
 
     private string FormatSpeedupTooltip(double value)
     {
-        if (value > 0)
+        if (value > 100)
+        {
             return $"+{value:0.##}% ускорение";
-        else if (value < 0)
+        }
+        else if (value < 100)
+        {
             return $"{value:0.##}% замедление";
+        }
         else
-            return "0% (без изменений)";
+        {
+            return "100% (без изменений)";
+        }
     }
+
     public void ClearCharts()
     {
         InitializeCharts();
@@ -183,8 +134,5 @@ public class ChartViewModel : BaseViewModel
         OnPropertyChanged(nameof(TimeYAxes));
         OnPropertyChanged(nameof(SpeedupXAxes));
         OnPropertyChanged(nameof(SpeedupYAxes));
-        OnPropertyChanged(nameof(MethodStatsSeries));
-        OnPropertyChanged(nameof(MethodStatsXAxes));
-        OnPropertyChanged(nameof(MethodStatsYAxes));
     }
 }

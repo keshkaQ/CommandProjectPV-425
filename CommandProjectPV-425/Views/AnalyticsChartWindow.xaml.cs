@@ -1,5 +1,4 @@
-﻿using CommandProjectPV_425.Models;
-using CommandProjectPV_425.ViewModels;
+﻿using CommandProjectPV_425.ViewModels;
 using System.Windows;
 
 namespace CommandProjectPV_425.Views;
@@ -13,9 +12,13 @@ public partial class AnalyticsChartWindow : Window
 
         _viewModel = new AnalyticsChartViewModel();
         DataContext = _viewModel;
+
+        // Инициализируем асинхронно после загрузки окна
+        Loaded += async (s, e) => await _viewModel.InitializeAsync();
     }
-    public void UpdateCharts()
+
+    public async Task UpdateChartsAsync()
     {
-        _viewModel.UpdateChartAsync();
+        await _viewModel.UpdateChartAsync();
     }
 }

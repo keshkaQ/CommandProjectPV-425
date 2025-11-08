@@ -66,7 +66,6 @@ namespace CommandProjectPV_425.Services
             {
                 foreach (var result in successfulResults)
                 {
-                    // сокращаем имя метода и задачи
                     var task = result.TaskType;
                     var method = result.MethodName;
 
@@ -80,74 +79,21 @@ namespace CommandProjectPV_425.Services
             return (labels, timeValues, speedupValues);
         }
 
-        //public (ISeries[] Series, Axis[] XAxes, Axis[] YAxes) CreateColumnChart(
-        //    List<string> labels,
-        //    List<double> values,
-        //    string xAxisName,
-        //    string yAxisName,
-        //    Func<double, string> yLabelFormatter,
-        //    Func<int, double, string> tooltipFormatter)
-        //{
-        //    var seriesList = new List<ISeries>();
-
-        //    for (int i = 0; i < values.Count; i++)
-        //    {
-        //        var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-        //        var barColor = Colors[i % Colors.Length];
-
-        //        var series = new ColumnSeries<ObservablePoint>
-        //        {
-        //            Values = singlePoint,
-        //            Name = labels[i].Replace("\n", "-"),
-        //            MaxBarWidth = 30,
-        //            Fill = new SolidColorPaint(barColor),
-        //            Stroke = null,
-        //            TooltipLabelFormatter = point =>
-        //            {
-        //                var index = (int)point.Model.X;
-        //                if (index >= 0 && index < labels.Count)
-        //                    return tooltipFormatter(index, (double)point.Model.Y);
-        //                return "N/A";
-        //            }
-        //        };
-
-        //        seriesList.Add(series);
-        //    }
-
-        //    var (xAxes, yAxes) = CreateAxes(xAxisName, yAxisName, values, yLabelFormatter);
-        //    return (seriesList.ToArray(), xAxes, yAxes);
-        //}
-
         public (ISeries[] Series, Axis[] XAxes, Axis[] YAxes) CreateColumnChart(
-    List<string> labels,
-    List<double> values,
-    string xAxisName,
-    string yAxisName,
-    Func<double, string> yLabelFormatter,
-    Func<int, double, string> tooltipFormatter,
-    bool isSpeedupChart = false) // ✅ Добавляем параметр для графика ускорения
+            List<string> labels,
+            List<double> values,
+            string xAxisName,
+            string yAxisName,
+            Func<double, string> yLabelFormatter,
+            Func<int, double, string> tooltipFormatter,
+            bool isSpeedupChart = false)
         {
             var seriesList = new List<ISeries>();
 
             for (int i = 0; i < values.Count; i++)
             {
                 var singlePoint = new List<ObservablePoint> { new ObservablePoint(i, values[i]) };
-
-                // ✅ Для графика ускорения используем цветовую кодировку
-                SKColor barColor;
-                if (isSpeedupChart)
-                {
-                    barColor = values[i] switch
-                    {
-                        > 0 => SKColors.MediumSeaGreen,  // Зеленый для положительного ускорения
-                        < 0 => SKColors.Tomato,          // Красный для отрицательного ускорения
-                        _ => SKColors.Gray               // Серый для нуля
-                    };
-                }
-                else
-                {
-                    barColor = Colors[i % Colors.Length]; // Обычные цвета для других графиков
-                }
+                var barColor = Colors[i % Colors.Length];
 
                 var series = new ColumnSeries<ObservablePoint>
                 {
@@ -184,85 +130,97 @@ namespace CommandProjectPV_425.Services
             double maxValue = values.Max();
             double padding = (maxValue - minValue) * 0.1;
 
-            // ✅ Для графика ускорения включаем ноль в диапазон
+            // ✅ Для графика ускорения включаем 1.0 в диапазон и центрируем его
             if (isSpeedupChart)
             {
-                minValue = Math.Min(minValue, 0) - Math.Abs(padding);
-                maxValue = Math.Max(maxValue, 0) + Math.Abs(padding);
+                // 1. Включаем 1.0 (100%) в минимальное и максимальное значения
+                minValue = Math.Min(minValue, 1.0);
+                maxValue = Math.Max(maxValue, 1.0);
+
+                // 2. Определяем максимальное отклонение от 1.0
+                double maxDeviation = Math.Max(
+                    Math.Abs(maxValue - 1.0),
+                    Math.Abs(minValue - 1.0));
+
+                // 3. Устанавливаем симметричный диапазон относительно 1.0
+                // (с учетом небольшого отступа)
+                double symPadding = maxDeviation + Math.Abs(maxDeviation * 0.1);
+
+                minValue = 1.0 - symPadding;
+                maxValue = 1.0 + symPadding;
+
+                //minValue = Math.Max(0, minValue - padding);
+                //maxValue = maxValue + padding;
+
             }
             else
             {
+                // Оригинальная логика для обычного графика (включает 0)
                 minValue = Math.Max(0, minValue - padding);
                 maxValue = maxValue + padding;
             }
 
             var xAxes = new[]
             {
-        new Axis
-        {
-            Labels = values.Select((v, i) => i.ToString()).ToArray(), // или labels если нужно
-            SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-            MinStep = 1,
-            Name = xName,
-            NamePaint = new SolidColorPaint(SKColors.Black)
-        }
-    };
+                new Axis
+                {
+                    // Установка Labeler в функцию, возвращающую пустую строку
+                    Labeler = value => string.Empty,
+                    Labels = null,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    MinStep = 1,
+                    Name = xName,
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
 
             var yAxes = new[]
             {
-        new Axis
-        {
-            Labeler = yLabelFormatter,
-            MinLimit = minValue,
-            MaxLimit = maxValue,
-            SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-            Name = yName,
-            NamePaint = new SolidColorPaint(SKColors.Black)
-        }
-    };
+                new Axis
+                {
+                    Labeler = yLabelFormatter,
+                    MinLimit = minValue,
+                    MaxLimit = maxValue,
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                    Name = yName,
+                    NamePaint = new SolidColorPaint(SKColors.Black)
+                }
+            };
 
             return (xAxes, yAxes);
         }
 
-        public (Axis[] X, Axis[] Y) CreateAxes(
-            string xName,
-            string yName,
-            List<double> values,
-            Func<double, string> yLabelFormatter)
+        public List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results)
         {
-            // Автоматическое определение пределов оси Y
-            double minValue = values.Min();
-            double maxValue = values.Max();
-            double padding = (maxValue - minValue) * 0.1;
+            var statistics = results
+                .GroupBy(r => r.MethodName)
+                .Select(g =>
+                {
+                    var validResults = g.Where(r => r.ExecutionTime != "Failed");
 
-            var xAxes = new[]
-            {
-            new Axis
-            {
-                // Установка Labeler в функцию, возвращающую пустую строку
-                Labeler = value => string.Empty,
-                Labels = null,
-                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                MinStep = 1,
-                Name = xName,
-                NamePaint = new SolidColorPaint(SKColors.Black)
-            }
-        };
+                    var averageTime = validResults.Any()
+                        ? validResults.Average(r => Helpers.DataParser.ParseTimeToMs(r.ExecutionTime))
+                        : 0.0;
 
-            var yAxes = new[]
-            {
-            new Axis
-            {
-                Labeler = yLabelFormatter,
-                MinLimit =Math.Max(0, minValue - padding),
-                MaxLimit = maxValue + padding,
-                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                Name = yName,
-                NamePaint = new SolidColorPaint(SKColors.Black)
-            }
-        };
+                    return new MethodStatistic
+                    {
+                        MethodName = g.Key,
+                        AverageTimeMs = averageTime,
+                        AverageSpeedup = 0.0
+                    };
+                })
+                .Where(s => s.AverageTimeMs > 0)
+                .OrderBy(s => s.MethodName)
+                .ToList();
 
-            return (xAxes, yAxes);
+            return statistics;
         }
     }
+}
+
+public class MethodStatistic
+{
+    public string MethodName { get; set; }
+    public double AverageTimeMs { get; set; }
+    public double AverageSpeedup { get; set; }
 }

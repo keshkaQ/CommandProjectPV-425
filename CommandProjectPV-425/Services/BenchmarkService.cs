@@ -1,6 +1,4 @@
-﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Reports;
+﻿using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 using CommandProjectPV_425.Interfaces;
 using CommandProjectPV_425.Models;
@@ -24,15 +22,15 @@ namespace CommandProjectPV_425.Services
             // базовая конфигурация
             // отключаем валидацию оптимизаций (для более стабильных результатов)
             // добавляем Job с минимальными настройками для быстрого выполнения
-            var config = ManualConfig
-                .Create(DefaultConfig.Instance)
-                .WithOptions(ConfigOptions.DisableOptimizationsValidator)
-                .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));
+            //var config = ManualConfig
+            //    .Create(DefaultConfig.Instance)
+            //    .WithOptions(ConfigOptions.DisableOptimizationsValidator)
+            //    .AddJob(Job.Dry.WithWarmupCount(1).WithIterationCount(1));
 
             // запускаем бенчмарк в отдельном потоке чтобы не блокировать UI
             return await Task.Run(() =>
             {
-                var summary = BenchmarkRunner.Run(benchmarkType,config);
+                var summary = BenchmarkRunner.Run(benchmarkType);
                 return ProcessBenchmarkSummary(summary, taskType, size);
             });
         }
@@ -136,18 +134,27 @@ namespace CommandProjectPV_425.Services
         // форматируем числовое значение ускорения в строку с нужной точностью
         private string FormatSpeedup(double speedup)
         {
-            double percentage = (speedup - 1.0) * 100;
+            double percentage = speedup * 100;
 
             return percentage switch
             {
-                > 100 => $"{percentage:F0}%",    
-                > 50 => $"{percentage:F0}%",     
-                > 10 => $"{percentage:F1}%",     
-                > 0 => $"{percentage:F1}%",      
-                0 => "0%",                        
-                > -10 => $"{percentage:F1}%",      
-                > -50 => $"{percentage:F1}%",      
-                _ => $"{percentage:F0}%"         
+                // Теперь пороговые значения увеличены на 100
+                // (текущий код: > 100 изменения)
+                > 200 => $"{percentage:F0}%",
+                // (текущий код: > 50 изменения)
+                > 150 => $"{percentage:F0}%",
+                // (текущий код: > 10 изменения)
+                > 110 => $"{percentage:F1}%",
+                // (текущий код: > 0 изменения)
+                > 100 => $"{percentage:F1}%",
+                // (текущий код: 0 изменения)
+                100 => "100%",
+                // (текущий код: > -10 изменения)
+                > 90 => $"{percentage:F1}%",
+                // (текущий код: > -50 изменения)
+                > 50 => $"{percentage:F1}%",
+                // (текущий код: <= -50 изменения)
+                _ => $"{percentage:F0}%"
             };
         }
     }

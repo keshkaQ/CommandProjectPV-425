@@ -266,7 +266,6 @@ namespace CommandProjectPV_425.ViewModels
                 return;
             }
             var analyticWindow = new AnalyticsChartWindow();
-            analyticWindow.UpdateCharts();
             analyticWindow.Show();
         }
 

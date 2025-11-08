@@ -29,6 +29,7 @@ namespace CommandProjectPV_425.Helpers
             }
         }
 
+        // извлекаем числовое значение ускорения
         public static double ParseSpeedup(string speedupStr)
         {
             try

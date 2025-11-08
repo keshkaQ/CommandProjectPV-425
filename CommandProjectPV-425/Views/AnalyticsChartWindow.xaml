@@ -1,4 +1,5 @@
-﻿<Window x:Class="CommandProjectPV_425.Views.AnalyticsChartWindow"
+﻿<Window
+    x:Class="CommandProjectPV_425.Views.AnalyticsChartWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,24 +14,80 @@
     WindowState="Maximized"
     mc:Ignorable="d">
 
+    <Window.Resources>
+        <Style x:Key="BorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#BDC3C7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+    </Window.Resources>
+
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" HorizontalAlignment="Left" Margin="10 5 0 0" Orientation="Horizontal">
-            <TextBlock Text="Количество ядер: "/>
-            <ComboBox Width="200" Name="CoreCountComboBox"/>
-        </StackPanel>
+        <Border
+            Grid.Row="0"
+            Margin="10"
+            Style="{StaticResource BorderStyle}">
+
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,12"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Foreground="#2C3E50"
+                    Text="Фильтр" />
+
+                <StackPanel
+                    HorizontalAlignment="Left"
+                    Orientation="Horizontal">
+                    <TextBlock Text="Количество ядер: " />
+                    <ComboBox
+                        Name="CoreCountComboBox"
+                        Width="100"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        DisplayMemberPath="DisplayName"
+                        ItemsSource="{Binding CoreCounts}"
+                        SelectedItem="{Binding SelectedCoreCount, Mode=TwoWay}" />
+
+                    <TextBlock Margin="20,0,0,0" Text="Задача: " />
+                    <ComboBox
+                        Name="TaskNameComboBox"
+                        Width="210"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding TasksNames}"
+                        SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
+
+                    <TextBlock Margin="20,0,0,0" Text="Размер входных данных: " />
+                    <ComboBox
+                        Name="ArraySizeComboBox"
+                        Width="100"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding DataSizes}"
+                        SelectedItem="{Binding SelectedDataSize, Mode=TwoWay}" />
+                </StackPanel>
+            </StackPanel>
+
+        </Border>
+
 
         <lvc:CartesianChart
+            x:Name="TimeChart"
             Grid.Row="1"
             Margin="20"
             LegendOrientation="Horizontal"
             LegendPosition="Bottom"
-            Series="{Binding TimeStatisticsSeries}"
-            XAxes="{Binding TimeStatisticsXAxes}"
-            YAxes="{Binding TimeStatisticsYAxes}" />
+            Series="{Binding TimeStatysticsSeries}"
+            XAxes="{Binding TimeStatysticsXAxes}"
+            YAxes="{Binding TimeStatysticsYAxes}" />
     </Grid>
 </Window>

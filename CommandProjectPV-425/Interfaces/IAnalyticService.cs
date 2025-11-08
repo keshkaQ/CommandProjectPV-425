@@ -1,9 +1,10 @@
-﻿using CommandProjectPV_425.Services;
+﻿using CommandProjectPV_425.Models;
+using CommandProjectPV_425.Services;
 
 namespace CommandProjectPV_425.Interfaces
 {
     public interface IAnalyticService
     {
-        Task<List<MethodStatistic>> GetMethodStatisticsAsync();
+        List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results);
     }
 }

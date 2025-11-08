@@ -10,7 +10,7 @@ namespace CommandProjectPV_425.Interfaces
         Task SaveResultsToDatabaseAsync(IEnumerable<BenchmarkResult> results);
         Task<List<BenchmarkResult>> LoadResultsFromDatabaseAsync();
         Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results);
-        Task <List<BenchmarkResult>> LoadResultsFromJsonAsync(string json);
-        Task<List<MethodStatistic>> GetAverageTimePerMethodAsync();
+        Task<List<BenchmarkResult>> LoadResultsFromJsonAsync(string json);
+        Task<(List<int> coreCounts, List<string> taskNames, List<int> dataSizes)> LoadAnalyticsDataAsync();
     }
 }
