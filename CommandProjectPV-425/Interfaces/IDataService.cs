@@ -12,5 +12,6 @@ namespace CommandProjectPV_425.Interfaces
         Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results);
         Task<List<int>> GetCoreCounts();
         Task<List<string>> GetTasksNames();
+        Task<List<int>> GetDataSizes();
     }
 }

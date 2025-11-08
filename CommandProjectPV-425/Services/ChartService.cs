@@ -178,7 +178,7 @@ namespace CommandProjectPV_425.Services
                     };
                 })
                 .Where(s => s.AverageTimeMs > 0)
-                //.OrderBy(s => s.AverageTimeMs)
+                .OrderBy(s => s.MethodName)
                 .ToList();
 
             return statistics;

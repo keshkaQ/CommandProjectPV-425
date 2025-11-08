@@ -43,6 +43,15 @@
                 VerticalAlignment="Center"
                 ItemsSource="{Binding TasksNames}"
                 SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
+
+            <TextBlock Text="Размер входных данных: " Margin="10 0 0 0"/>
+            <ComboBox
+                Name="ArraySizeComboBox"
+                Width="100"
+                Margin="5,0,0,0"
+                VerticalAlignment="Center"
+                ItemsSource="{Binding DataSizes}"
+                SelectedItem="{Binding SelectedDataSize, Mode=TwoWay}" />
         </StackPanel>
 
 

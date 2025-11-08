@@ -88,7 +88,18 @@ public class DataService : IDataService
         return await context.BenchmarkResults
             .Select(n => n.TaskType)
             .Distinct()
-            //.OrderBy(tsakType => tsakType)
+            //.OrderBy(taskType => taskType)
+            .ToListAsync();
+    }
+
+    public async Task<List<int>> GetDataSizes()
+    {
+        using var context = new AppDbContext();
+
+        return await context.BenchmarkResults
+            .Select(n => n.DataSize)
+            .Distinct()
+            .OrderBy(dataSize => dataSize)
             .ToListAsync();
     }
 }

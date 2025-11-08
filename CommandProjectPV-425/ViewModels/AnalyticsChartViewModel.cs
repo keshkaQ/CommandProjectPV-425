@@ -20,6 +20,7 @@ public class AnalyticsChartViewModel : BaseViewModel
 
     public ObservableCollection<CoreCountOption> CoreCount { get; private set; }
     public ObservableCollection<string> TasksNames { get; private set; }
+    public ObservableCollection<DataSizeOption> DataSizes { get; private set; }
 
     private CoreCountOption? _selectedCoreCount; // nullable, чтобы можно было выбрать "Все ядра"
     public CoreCountOption? SelectedCoreCount
@@ -52,12 +53,28 @@ public class AnalyticsChartViewModel : BaseViewModel
         }
     }
 
+    private DataSizeOption _selectedDataSize;
+    public DataSizeOption SelectedDataSize
+    {
+        get => _selectedDataSize;
+        set
+        {
+            if (_selectedDataSize != value)
+            {
+                _selectedDataSize = value;
+                OnPropertyChanged();
+                _ = UpdateChartAsync();
+            }
+        }
+    }
+
     public AnalyticsChartViewModel(IChartService chartService, IDataService dataService)
     {
         _chartService = chartService;
         _dataService = dataService;
         CoreCount = [];
         TasksNames = [];
+        DataSizes = [];
     }
 
     public AnalyticsChartViewModel() : this(new ChartService(), new DataService())
@@ -69,6 +86,7 @@ public class AnalyticsChartViewModel : BaseViewModel
         await LoadDataAsync();
         SelectedCoreCount = CoreCount[0];
         SelectedTaskName = TasksNames[0];
+        SelectedDataSize = DataSizes[0];
 
         await UpdateChartAsync();
     }
@@ -77,13 +95,16 @@ public class AnalyticsChartViewModel : BaseViewModel
     {
         CoreCount.Clear();
         TasksNames.Clear();
+        DataSizes.Clear();
 
         // Добавляем пункт "Все ядра"
         CoreCount.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
         TasksNames.Add("Все задачи");
+        DataSizes.Add(new DataSizeOption { Value = -1, DisplayName = "Все размеры" });
 
         var dbCoreCounts = await _dataService.GetCoreCounts();
         var dbTasksNames = await _dataService.GetTasksNames();
+        var dbDataSizes = await _dataService.GetDataSizes();
 
         foreach (var count in dbCoreCounts)
         {
@@ -93,6 +114,11 @@ public class AnalyticsChartViewModel : BaseViewModel
         foreach (var taskName in dbTasksNames)
         {
             TasksNames.Add(taskName);
+        }
+
+        foreach (var dataSize in dbDataSizes)
+        {
+            DataSizes.Add(new DataSizeOption { Value = dataSize, DisplayName = $"{dataSize}" });
         }
     }
 
@@ -105,26 +131,65 @@ public class AnalyticsChartViewModel : BaseViewModel
             // Загружаем все результаты из БД
             var allResults = await _dataService.LoadResultsFromDatabaseAsync();
 
-            // Фильтруем
             var filteredResults = allResults;
+            // Фильтруем
+            // если все фильтры изменены
             if (SelectedCoreCount != null && SelectedCoreCount.Value != -1 &&
-                SelectedTaskName != "Все задачи" && SelectedTaskName != null)
+                SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
+                SelectedDataSize != null && SelectedDataSize.Value != -1)
             {
                 filteredResults = allResults
-                    .Where(r => r.CoreCount == SelectedCoreCount.Value && r.TaskType == SelectedTaskName)
+                    .Where(r => r.CoreCount == SelectedCoreCount.Value &&
+                            r.TaskType == SelectedTaskName &&
+                            r.DataSize == SelectedDataSize.Value)
                     .ToList();
             }
+            // если изменен только SelectedCoreCount
             else if (SelectedCoreCount != null && SelectedCoreCount.Value != -1)
             {
                 filteredResults = allResults.Where(c => c.CoreCount == SelectedCoreCount.Value).ToList();
             }
-            else if(SelectedTaskName != "Все задачи" && SelectedTaskName != null)
+            // если изменен только SelectedTaskName
+            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null)
             {
                 filteredResults = allResults.Where(t => t.TaskType == SelectedTaskName).ToList();
+            }
+            // если изменен только SelectedDataSize
+            else if (SelectedDataSize != null && SelectedDataSize.Value != -1)
+            {
+                filteredResults = allResults.Where(d => d.DataSize == SelectedDataSize.Value).ToList();
+            }
+            // если изменены SelectedDataSize и SelectedCoreCount
+            else if (SelectedCoreCount != null && SelectedCoreCount.Value != -1 &&
+                    SelectedDataSize != null && SelectedDataSize.Value != -1)
+            {
+                filteredResults = allResults
+                    .Where(cd => cd.CoreCount == SelectedCoreCount.Value &&
+                            cd.DataSize == SelectedDataSize.Value)
+                    .ToList();
+            }
+            // если изменены SelectedDataSize и SelectedTaskName
+            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
+                    SelectedDataSize != null && SelectedDataSize.Value != -1)
+            {
+                filteredResults = allResults
+                    .Where(td => td.TaskType == SelectedTaskName &&
+                            td.DataSize == SelectedDataSize.Value)
+                    .ToList();
+            }
+            // если изменены SelectedCoreCount и SelectedTaskName
+            else if (SelectedTaskName != "Все задачи" && SelectedTaskName != null &&
+                    SelectedCoreCount != null && SelectedCoreCount.Value != -1)
+            {
+                filteredResults = allResults
+                    .Where(ct => ct.TaskType == SelectedTaskName &&
+                            ct.CoreCount == SelectedCoreCount.Value)
+                    .ToList();
             }
 
             // Вычисляем статистику на основе отфильтрованных результатов
             var stats = _chartService.CalculateAverageTimePerMethod(filteredResults);
+            
 
             UpdateTimeStatysticsChart(stats);
         }
@@ -177,15 +242,28 @@ public class AnalyticsChartViewModel : BaseViewModel
         OnPropertyChanged(nameof(TimeStatysticsSeries));
         OnPropertyChanged(nameof(TimeStatysticsXAxes));
         OnPropertyChanged(nameof(TimeStatysticsYAxes));
+
         OnPropertyChanged(nameof(CoreCount));
         OnPropertyChanged(nameof(SelectedCoreCount));
+
         OnPropertyChanged(nameof(TasksNames));
         OnPropertyChanged(nameof(SelectedTaskName));
+
+        OnPropertyChanged(nameof(DataSizes));
+        OnPropertyChanged(nameof(SelectedDataSize));
 
     }
 }
 
 public class CoreCountOption
+{
+    public int Value { get; set; }
+    public string DisplayName { get; set; }
+
+    public override string ToString() => DisplayName; // для отображения в ComboBox
+}
+
+public class DataSizeOption
 {
     public int Value { get; set; }
     public string DisplayName { get; set; }
