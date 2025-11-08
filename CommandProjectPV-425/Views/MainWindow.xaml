@@ -297,11 +297,6 @@
                             HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
                         <DataGridTextColumn
                             Width="*"
-                            Binding="{Binding OperatingSystem}"
-                            Header="ОС"
-                            HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />
-                        <DataGridTextColumn
-                            Width="*"
                             Binding="{Binding TaskType}"
                             Header="Тип задачи"
                             HeaderStyle="{StaticResource ModernDataGridHeaderStyle}" />

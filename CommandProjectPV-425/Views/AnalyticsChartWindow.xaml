@@ -63,6 +63,7 @@
                         Width="210"
                         Margin="5,0,0,0"
                         VerticalAlignment="Center"
+                        ToolTip="{Binding SelectedTaskName.Description}"
                         ItemsSource="{Binding TasksNames}"
                         SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
 

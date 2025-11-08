@@ -18,12 +18,6 @@ namespace CommandProjectPV_425.Interfaces
         Func<int, double, string> tooltipFormatter,
         bool isSpeedupChart = false);
 
-        //(Axis[] X, Axis[] Y) CreateAxes(
-        //    string xName,
-        //    string yName,
-        //    List<double> values,
-        //    Func<double, string> yLabelFormatter);
-
         (Axis[] X, Axis[] Y) CreateAxes(
             string xName,
             string yName,
@@ -32,5 +26,7 @@ namespace CommandProjectPV_425.Interfaces
             bool isSpeedupChart = false);
 
         List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results);
+
+        string GetTaskNameDescription(string taskName);
     }
 }

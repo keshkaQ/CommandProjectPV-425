@@ -16,8 +16,8 @@ namespace CommandProjectPV_425.Services
         private readonly SKColor[] Colors =
         [
             SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
-        SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-        SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+            SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
+            SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
         ];
 
         public (List<string> labels, List<double> timeValues, List<double> speedupValues) PrepareChartData(IEnumerable<BenchmarkResult> results)
@@ -118,47 +118,6 @@ namespace CommandProjectPV_425.Services
             return (seriesList.ToArray(), xAxes, yAxes);
         }
 
-        //public (Axis[] X, Axis[] Y) CreateAxes(
-        //    string xName,
-        //    string yName,
-        //    List<double> values,
-        //    Func<double, string> yLabelFormatter)
-        //{
-        //    // Автоматическое определение пределов оси Y
-        //    double minValue = values.Min();
-        //    double maxValue = values.Max();
-        //    double padding = (maxValue - minValue) * 0.1;
-
-        //    var xAxes = new[]
-        //    {
-        //    new Axis
-        //    {
-        //        // Установка Labeler в функцию, возвращающую пустую строку
-        //        Labeler = value => string.Empty,
-        //        Labels = null,
-        //        SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-        //        MinStep = 1,
-        //        Name = xName,
-        //        NamePaint = new SolidColorPaint(SKColors.Black)
-        //    }
-        //};
-
-        //    var yAxes = new[]
-        //    {
-        //    new Axis
-        //    {
-        //        Labeler = yLabelFormatter,
-        //        MinLimit =Math.Max(0, minValue - padding),
-        //        MaxLimit = maxValue + padding,
-        //        SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-        //        Name = yName,
-        //        NamePaint = new SolidColorPaint(SKColors.Black)
-        //    }
-        //};
-
-        //    return (xAxes, yAxes);
-        //}
-
         public (Axis[] X, Axis[] Y) CreateAxes(
             string xName,
             string yName,
@@ -203,30 +162,30 @@ namespace CommandProjectPV_425.Services
 
             var xAxes = new[]
             {
-                new Axis
-                {
-                    // Установка Labeler в функцию, возвращающую пустую строку
-                    Labeler = value => string.Empty,
-                    Labels = null,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    MinStep = 1,
-                    Name = xName,
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            };
+            new Axis
+            {
+                // Установка Labeler в функцию, возвращающую пустую строку
+                Labeler = value => string.Empty,
+                Labels = null,
+                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                MinStep = 1,
+                Name = xName,
+                NamePaint = new SolidColorPaint(SKColors.Black)
+            }
+        };
 
             var yAxes = new[]
             {
-                new Axis
-                {
-                    Labeler = yLabelFormatter,
-                    MinLimit = minValue,
-                    MaxLimit = maxValue,
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
-                    Name = yName,
-                    NamePaint = new SolidColorPaint(SKColors.Black)
-                }
-            };
+            new Axis
+            {
+                Labeler = yLabelFormatter,
+                MinLimit = minValue,
+                MaxLimit = maxValue,
+                SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(100), 1),
+                Name = yName,
+                NamePaint = new SolidColorPaint(SKColors.Black)
+            }
+        };
 
             return (xAxes, yAxes);
         }
@@ -255,6 +214,19 @@ namespace CommandProjectPV_425.Services
                 .ToList();
 
             return statistics;
+        }
+
+        public string GetTaskNameDescription(string taskName)
+        {
+            return taskName switch
+            {
+                "Count Numbers Above Average" => "Подсчёт количества элементов, превышающих среднее значение массива",
+                "Divisible Three or Five" => "Подсчёт чисел, делящихся одновременно на 3 и 5 (кратные 15)",
+                "Find Prime Numbers" => "Подсчёт количества простых чисел в массиве",
+                "Maximum Of Non Extreme Elements" => "Поиск максимального значения среди элементов, не являющихся локальными экстремумами",
+                "Max Frequency Of Elements" => "Поиск максимальной частоты повторения любого элемента",
+                _ => null
+            };
         }
     }
 }

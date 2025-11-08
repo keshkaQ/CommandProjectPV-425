@@ -20,7 +20,7 @@ public class AnalyticsChartViewModel : BaseViewModel
     public Axis[] TimeStatysticsYAxes { get; private set; }
 
     public ObservableCollection<CoreCountOption> CoreCounts { get; private set; }
-    public ObservableCollection<string> TasksNames { get; private set; }
+    public ObservableCollection<TaskNameItem> TasksNames { get; private set; }
     public ObservableCollection<DataSizeOption> DataSizes { get; private set; }
 
     private CoreCountOption? _selectedCoreCount; // nullable, чтобы можно было выбрать "Все ядра"
@@ -39,8 +39,8 @@ public class AnalyticsChartViewModel : BaseViewModel
         }
     }
 
-    private string _selectedTaskName;
-    public string SelectedTaskName
+    private TaskNameItem _selectedTaskName;
+    public TaskNameItem SelectedTaskName
     {
         get => _selectedTaskName;
         set
@@ -103,7 +103,7 @@ public class AnalyticsChartViewModel : BaseViewModel
 
         // Базовые значения "все"
         CoreCounts.Add(new CoreCountOption { Value = -1, DisplayName = "Все ядра" });
-        TasksNames.Add("Все задачи");
+        TasksNames.Add(new TaskNameItem { Name = "Все задачи", Description = "" });
         DataSizes.Add(new DataSizeOption { Value = -1, DisplayName = "Все размеры" });
 
         // Загружаем уникальные значения из БД
@@ -116,7 +116,7 @@ public class AnalyticsChartViewModel : BaseViewModel
 
         foreach (var taskName in dbTasksNames)
         {
-            TasksNames.Add(taskName);
+            TasksNames.Add(new TaskNameItem { Name = $"{taskName}", Description = $"{_chartService.GetTaskNameDescription(taskName)}" });
         }
 
         foreach (var dataSize in dbDataSizes)
@@ -142,9 +142,9 @@ public class AnalyticsChartViewModel : BaseViewModel
                 filteredResults = filteredResults.Where(c => c.CoreCount == SelectedCoreCount.Value).ToList();
             }
 
-            if (SelectedTaskName != "Все задачи" && SelectedTaskName != null)
+            if (SelectedTaskName != null && SelectedTaskName.Name != "Все задачи")
             {
-                filteredResults = filteredResults.Where(t => t.TaskType == SelectedTaskName).ToList();
+                filteredResults = filteredResults.Where(t => t.TaskType == SelectedTaskName.Name).ToList();
             }
 
             if (SelectedDataSize != null && SelectedDataSize.Value != -1)
@@ -214,3 +214,10 @@ public class AnalyticsChartViewModel : BaseViewModel
 public class CoreCountOption : BaseDataOption { }
 
 public class DataSizeOption : BaseDataOption { }
+
+public class TaskNameItem
+{
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public override string ToString() => Name;
+}

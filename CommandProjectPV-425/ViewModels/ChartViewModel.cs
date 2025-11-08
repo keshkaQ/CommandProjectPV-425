@@ -4,14 +4,12 @@ using CommandProjectPV_425.Services;
 using CommandProjectPV_425.ViewModels.Base;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using System.Windows;
 
 namespace CommandProjectPV_425.ViewModels;
 
 public class ChartViewModel : BaseViewModel
 {
     private readonly IChartService _chartService;
-    private readonly IDataService _dataService;
 
     public ISeries[] TimeSeries { get; private set; }
     public ISeries[] SpeedupSeries { get; private set; }
@@ -31,7 +29,6 @@ public class ChartViewModel : BaseViewModel
     public ChartViewModel(IChartService chartService, IDataService dataService)
     {
         _chartService = chartService;
-        _dataService = dataService;
 
         InitializeCharts();
     }
@@ -110,11 +107,11 @@ public class ChartViewModel : BaseViewModel
     {
         if (value > 100)
         {
-            return $"+{value:0.##}% ускорение";
+            return $"+{value:0.##}% (ускорение на {(value - 100):0.##}%)";
         }
         else if (value < 100)
         {
-            return $"{value:0.##}% замедление";
+            return $"{value:0.##}% (замедление на {(100 - value):0.##}%)";
         }
         else
         {
