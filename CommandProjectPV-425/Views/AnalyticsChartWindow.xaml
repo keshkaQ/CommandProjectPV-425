@@ -44,9 +44,7 @@
                     Foreground="#2C3E50"
                     Text="Фильтр" />
 
-                <StackPanel
-                    HorizontalAlignment="Left"
-                    Orientation="Horizontal">
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Text="Количество ядер: " />
                     <ComboBox
                         Name="CoreCountComboBox"
@@ -64,7 +62,19 @@
                         Margin="5,0,0,0"
                         VerticalAlignment="Center"
                         ItemsSource="{Binding TasksNames}"
-                        SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}" />
+                        SelectedItem="{Binding SelectedTaskName, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"> 
+                                    <!--  Отображаем свойство Name  -->
+                                    <TextBlock.ToolTip>
+                                        <ToolTip Content="{Binding Description}" />
+                                        <!--  Показываем свойство Description как ToolTip  -->
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
                     <TextBlock Margin="20,0,0,0" Text="Размер входных данных: " />
                     <ComboBox

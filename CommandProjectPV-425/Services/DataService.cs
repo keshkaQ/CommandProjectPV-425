@@ -52,6 +52,8 @@ public class DataService : IDataService
         // преобразуем результаты для сериализации в json
         var resultsToSave = results.Select(r => new
         {
+            r.Processor,
+            r.CoreCount,
             r.TaskType,
             r.DataSize,
             r.MethodName,

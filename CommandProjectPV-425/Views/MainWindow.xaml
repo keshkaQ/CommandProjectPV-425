@@ -6,8 +6,8 @@
     xmlns:local="clr-namespace:CommandProjectPV_425.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Измерение производительности численных задач с помощью BenchmarkDotNet"
-    Width="1330"
-    Height="700"
+    Width="1350"
+    Height="735"
     Icon="/Images/Иконка.ico"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -138,38 +138,29 @@
             BorderBrush="#BDC3C7"
             BorderThickness="0,0,0,1"
             CornerRadius="0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
+            <StackPanel Orientation="Horizontal">
                 <Image
-                    Grid.Column="0"
                     Width="150"
                     Height="60"
                     Source="/Images/result_logo_v2.png" />
                 <TextBlock
-                    Grid.Column="1"
+                    Margin="30,0,0,0"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     FontSize="20"
                     FontWeight="Bold"
                     Foreground="#2C3E50"
                     Text="📊 Измерение производительности численных задач c помощью BenchmarkDotNet" />
-
                 <Image
-                    Grid.Column="2"
                     Width="150"
                     Height="50"
+                    Margin="45,0,0,0"
                     VerticalAlignment="Center"
                     Source="/Images/result_logo_top_v2.jpeg" />
                 <Button
-                    Grid.Column="1"
                     Width="50"
                     Height="50"
-                    Margin="890,0,0,0"
+                    Margin="15,0,0,0"
                     Background="Transparent"
                     BorderBrush="#8E44AD"
                     Click="AboutBtn_Click"
@@ -179,7 +170,7 @@
                     FontWeight="Bold"
                     Foreground="Crimson"
                     ToolTip="О программе и команде разработчиков" />
-            </Grid>
+            </StackPanel>
         </Border>
 
         <Border

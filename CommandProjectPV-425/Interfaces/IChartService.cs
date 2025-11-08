@@ -26,6 +26,8 @@ namespace CommandProjectPV_425.Interfaces
             Func<double, string> yLabelFormatter,
             bool isSpeedupChart = false);
 
+        string GetTaskNameDescription(string taskName);
+
         List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results);
     }
 }

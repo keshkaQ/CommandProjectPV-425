@@ -108,11 +108,11 @@ public class ChartViewModel : BaseViewModel
     {
         if (value > 100)
         {
-            return $"+{value:0.##}% ускорение";
+            return $"+{value:0.##}% (ускорение на {(value - 100):0.##}%)";
         }
         else if (value < 100)
         {
-            return $"{value:0.##}% замедление";
+            return $"{value:0.##}% (замедление на {(100 - value):0.##}%)";
         }
         else
         {

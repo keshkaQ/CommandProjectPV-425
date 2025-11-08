@@ -17,7 +17,7 @@ namespace CommandProjectPV_425.Services
         [
             SKColors.DodgerBlue, SKColors.Tomato, SKColors.MediumSeaGreen,
         SKColors.Gold, SKColors.SlateBlue, SKColors.Firebrick,
-        SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal
+        SKColors.DarkCyan, SKColors.Orange, SKColors.Purple, SKColors.Teal,
         ];
 
         public (List<string> labels, List<double> timeValues, List<double> speedupValues) PrepareChartData(IEnumerable<BenchmarkResult> results)
@@ -188,6 +188,18 @@ namespace CommandProjectPV_425.Services
             };
 
             return (xAxes, yAxes);
+        }
+        public string GetTaskNameDescription(string taskName)
+        {
+            return taskName switch
+            {
+                "Count Numbers Above Average" => "Подсчёт количества элементов, превышающих среднее значение массива",
+                "Divisible Three or Five" => "Подсчёт чисел, делящихся одновременно на 3 и 5 (кратные 15)",
+                "Find Prime Numbers" => "Подсчёт количества простых чисел в массиве",
+                "Maximum Of Non Extreme Elements" => "Поиск максимального значения среди элементов, не являющихся локальными экстремумами",
+                "Max Frequency Of Elements" => "Поиск максимальной частоты повторения любого элемента",
+                _ => null
+            };
         }
 
         public List<MethodStatistic> CalculateAverageTimePerMethod(IEnumerable<BenchmarkResult> results)
