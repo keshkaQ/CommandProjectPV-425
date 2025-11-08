@@ -170,17 +170,17 @@
 
 ** Пример результатов одного из проводимых тестов**
 
-| Процессор | Ядра | ОС | Задача | Размер | Метод выполнения | Время | Ускорение | Дата теста |
-|-----------|------|----|--------|--------|------------------|-------|-----------|------------|
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Parallel Invoke | 2,07 ms | +144% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Parallel Partitioner | 2,44 ms | +107% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Tasks Run | 3,52 ms | +43,5% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Array PLINQ | 3,85 ms | +31,1% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Parallel For | 3,92 ms | +28,8% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Array Unsafe | 4,53 ms | +11,3% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Array For | 5,05 ms | 0% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Array SIMD | 2344 µs | +2053% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Windows 10.0.19045 | Count Numbers Above Average | 1,000,000 | Array SIMD Intrinsic | 289,8 µs | +1641% | 07.11.25 16:06 |
+| Процессор | Ядра | Задача | Размер | Метод выполнения | Время | Ускорение | Дата теста |
+|-----------|------|--------|--------|------------------|-------|-----------|------------|
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Invoke | 2,07 ms | +144% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Partitioner | 2,44 ms | +107% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Tasks Run | 3,52 ms | +43,5% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array PLINQ | 3,85 ms | +31,1% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel For | 3,92 ms | +28,8% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array Unsafe | 4,53 ms | +11,3% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array For | 5,05 ms | 0% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD | 2344 µs | +2053% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD Intrinsic | 289,8 µs | +1641% | 07.11.25 16:06 |
 
 ## 📊 Просмотр и Анализ Результатов
 
