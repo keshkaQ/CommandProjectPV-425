@@ -164,11 +164,11 @@
                     Background="Transparent"
                     BorderBrush="#8E44AD"
                     Click="AboutBtn_Click"
-                    Content="❓"
+                    Content="❗"
                     Cursor="Hand"
                     FontSize="18"
                     FontWeight="Bold"
-                    Foreground="Crimson"
+                    Foreground="Blue"
                     ToolTip="О программе и команде разработчиков" />
             </StackPanel>
         </Border>
