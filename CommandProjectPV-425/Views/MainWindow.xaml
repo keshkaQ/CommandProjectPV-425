@@ -157,19 +157,41 @@
                     Margin="45,0,0,0"
                     VerticalAlignment="Center"
                     Source="/Images/result_logo_top_v2.jpeg" />
-                <Button
+                <Border
                     Width="50"
                     Height="50"
                     Margin="15,0,0,0"
                     Background="Transparent"
-                    BorderBrush="#8E44AD"
-                    Click="AboutBtn_Click"
-                    Content="❗"
-                    Cursor="Hand"
-                    FontSize="18"
-                    FontWeight="Bold"
-                    Foreground="Blue"
-                    ToolTip="О программе и команде разработчиков" />
+                    BorderBrush="CornflowerBlue"
+                    BorderThickness="2"
+                    CornerRadius="25">
+
+                    <Button
+                        Padding="0"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="AboutBtn_Click"
+                        Content="❗"
+                        Cursor="Hand"
+                        FontSize="24"
+                        FontWeight="Bold"
+                        Foreground="Blue"
+                        ToolTip="О программе и команде разработчиков">
+
+                        <Button.Template>
+                            <ControlTemplate TargetType="{x:Type Button}">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </ControlTemplate>
+                        </Button.Template>
+
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            </Style>
+                        </Button.Style>
+
+                    </Button>
+                </Border>
             </StackPanel>
         </Border>
 
