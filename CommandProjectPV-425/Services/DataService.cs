@@ -37,8 +37,17 @@ public class DataService : IDataService
 
     public async Task SaveResultsToJsonAsync(IEnumerable<BenchmarkResult> results)
     {
-        // путь к папке для сохранения результатов
-        string directoryPath = "BenchmarkResults";
+        var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+        // Поднимаемся на уровни вверх к корню проекта
+        var projectFolder = Directory.GetParent(baseDirectory)?.Parent?.Parent?.Parent?.FullName;
+
+        if (string.IsNullOrEmpty(projectFolder) || !Directory.Exists(projectFolder))
+        {
+            throw new DirectoryNotFoundException("Не удалось найти корневую папку проекта");
+        }
+
+        string directoryPath = Path.Combine(projectFolder, "BenchmarkResults");
 
         // создаем папку, если она не существует
         if (!Directory.Exists(directoryPath))

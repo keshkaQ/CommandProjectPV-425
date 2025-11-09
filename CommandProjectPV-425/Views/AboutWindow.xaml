@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="{Binding Title}"
     Width="650"
-    Height="650"
+    Height="700"
     Background="#F7F9FB"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterOwner"
@@ -257,13 +257,25 @@
             </Grid>
 
             <!--  Нижняя часть  -->
+
+            <TextBlock
+                Name="GitHubLinkTextBlock"
+                Margin="10"
+                HorizontalAlignment="Center"
+                FontSize="12"
+                Foreground="#7F8C8D">
+                <Hyperlink NavigateUri="https://github.com/keshkaQ/CommandProjectPV-425" RequestNavigate="Hyperlink_RequestNavigate">
+                    https://github.com/keshkaQ/CommandProjectPV-425
+                </Hyperlink>
+            </TextBlock>
+
             <Separator Margin="0,0,0,15" />
             <TextBlock
                 Margin="0,0,0,15"
                 HorizontalAlignment="Center"
                 FontSize="12"
                 Foreground="#7F8C8D"
-                Text="© 2025 Команда BV425, Академия TOP" />
+                Text="© 2025 Команда ПВ425, Академия TOP" />
             <Button
                 Width="100"
                 Height="35"

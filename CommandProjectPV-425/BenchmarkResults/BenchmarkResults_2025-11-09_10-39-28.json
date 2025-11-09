@@ -1,0 +1,119 @@
+[
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Parallel Invoke",
+    "executionTime": "1,89 ms",
+    "speedup": "299%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      1885.102126953125
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Parallel Partitioner",
+    "executionTime": "2,25 ms",
+    "speedup": "251%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      2250.1057756696428
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Tasks Run",
+    "executionTime": "3,19 ms",
+    "speedup": "177%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      3189.8112060546873
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Parallel For",
+    "executionTime": "3,91 ms",
+    "speedup": "144,5%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      3905.3234375
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Array Unsafe",
+    "executionTime": "4,35 ms",
+    "speedup": "129,6%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      4354.631730769231
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Array PLINQ",
+    "executionTime": "4,70 ms",
+    "speedup": "120,2%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      4695.6810546875
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Array For",
+    "executionTime": "5,64 ms",
+    "speedup": "100%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      5642.137834821428
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Array SIMD",
+    "executionTime": "211,5 \u03BCs",
+    "speedup": "2667%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      211.52520228794643
+    ]
+  },
+  {
+    "processor": "Intel64 Family 6 Model 140 Stepping 2, GenuineIntel",
+    "coreCount": 4,
+    "taskType": "Count Numbers Above Average",
+    "dataSize": 1000000,
+    "methodName": "Array SIMD Intrinsics",
+    "executionTime": "252,0 \u03BCs",
+    "speedup": "2239%",
+    "timestamp": "2025-11-09 10:39:19",
+    "rawTimes": [
+      251.95981119791665
+    ]
+  }
+]
