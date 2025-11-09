@@ -172,15 +172,15 @@
 
 | Процессор | Ядра | Задача | Размер | Метод выполнения | Время | Ускорение | Дата теста |
 |-----------|------|--------|--------|------------------|-------|-----------|------------|
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Invoke | 2,07 ms | +144% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Partitioner | 2,44 ms | +107% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Tasks Run | 3,52 ms | +43,5% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array PLINQ | 3,85 ms | +31,1% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel For | 3,92 ms | +28,8% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array Unsafe | 4,53 ms | +11,3% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array For | 5,05 ms | 0% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD | 2344 µs | +2053% | 07.11.25 16:06 |
-| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD Intrinsic | 289,8 µs | +1641% | 07.11.25 16:06 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Invoke | 1,89 ms | +299% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel Partitioner | 2,25 ms | +251% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Tasks Run | 3,19 ms | +177% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array PLINQ | 4,70 ms | +120,2% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Parallel For | 3,91 ms | +144,5% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array Unsafe | 4,35 ms | +129,6% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array For | 5,64 ms | 100% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD | 211,5 µs | +2667% | 09.11.25 10:39 |
+| Intel64 Family 6 Model 140 Stepping 2, GenuineIntel | 4 | Count Numbers Above Average | 1,000,000 | Array SIMD Intrinsic | 252,0 µs | +2239% | 09.11.25 10:39 |
 
 ## 📊 Просмотр и Анализ Результатов
 
@@ -235,19 +235,20 @@
 
 #### Главное окно приложения:
 
-<img width="1319" height="688" alt="image" src="https://github.com/user-attachments/assets/ac200cde-20c6-4ecf-9f94-b5f166ddd3db" />
+<img width="1672" height="905" alt="image" src="https://github.com/user-attachments/assets/3060d5c6-3a68-4252-af6f-3ec38848f79c" />
 
 Интерфейс настройки тестов и просмотра результатов
 
 #### График производительности:
 
-<img width="1933" height="1041" alt="image" src="https://github.com/user-attachments/assets/aba52811-982c-4c3b-8bbd-113b59ccffc6" />
+<img width="1477" height="862" alt="image" src="https://github.com/user-attachments/assets/9300d7ac-62e6-412e-8800-67944ac259f2" />
 
 Сравнение времени выполнения методов
 
 #### График ускорения:
 
-<img width="1994" height="1040" alt="image" src="https://github.com/user-attachments/assets/afe0f3a7-931b-4c42-b61a-e778d843b9c6" />
+<img width="1477" height="861" alt="image" src="https://github.com/user-attachments/assets/16c854a8-679c-4786-8bc0-2f3be5c701ff" />
+
 
 Относительная эффективность методов относительно baseline
 
